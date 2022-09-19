@@ -1,0 +1,28 @@
+<div class="card">
+  <div class="card-header">
+    <p>{{inicio["res"]}}</p>
+  </div>
+</div>
+
+<div class="mb-3 row">
+  <label for="inputPassword" class="col-sm-2 col-form-label">Comando de entrada</label>
+  <div class="col-sm-10">
+    <input type="text" class="form-control" id="inputComando" [(ngModel)]="this.entrada.comando">
+  </div>
+  <div class="d-grid gap-2">
+    <button type="submit" class="btn btn-secondary" id="btModificarD" (click)="mandarComando()">
+      Enter</button>
+  </div>
+</div>
+
+<div class="form-floating">
+  <textarea [(ngModel)]="this.terminal" class="form-control" placeholder="Leave a comment here" id="terminal" name="terminal" style="height: 500px" disabled></textarea>
+  <label for="terminal">Terminal</label>
+</div>
+
+<div class="card-footer text-muted">
+  Realizado por:<br>
+  Diego Enrique Arriaga Melendez<br>
+  Carnet 202003892<br>
+  Curso: MIA Segundo Semestre 2022
+</div>
