@@ -71,17 +71,16 @@ func mkdisk() Structs.Resp {
 	for i := 0; i < 1024; i++ {
 		buffer[i] = 0
 	}
+
 	binary.Write(&contenedor, binary.BigEndian, &buffer)
 
-	i := 0
-	for i < size {
+	for i := 0; i < size; i++ {
 		var bufferControl bytes.Buffer
 		binary.Write(&bufferControl, binary.BigEndian, contenedor.Bytes())
 		_, err = file.Write(bufferControl.Bytes())
 		if err != nil {
 			fmt.Println(err)
 		}
-		i++
 	}
 
 	return Structs.Resp{Res: "SE CREO EL DISCO EXITOSAMENTE", Reporte: false}
