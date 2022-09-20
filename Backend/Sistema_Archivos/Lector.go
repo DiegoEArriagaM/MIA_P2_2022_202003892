@@ -24,17 +24,14 @@ func Lector(comando string) Structs.Resp {
 
 			for len(entradaO) > 0 {
 				if strncmp(entradaL, "-s") {
-					i = strings.Index(entradaL, "->") + 2
+					i = find(entradaL, "->") + 2
 					for entradaL[i] == ' ' && len(entradaL) > 0 {
 						i++
 					}
 					entradaL = entradaL[i:]
 					entradaO = entradaO[i:]
 
-					i = strings.Index(entradaL, " ")
-					if i == -1 {
-						i = len(entradaL)
-					}
+					i = find(entradaL, " ")
 					s, _ := strconv.Atoi(entradaL[:i])
 					Sdisk = s
 					for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
@@ -44,17 +41,14 @@ func Lector(comando string) Structs.Resp {
 					entradaO = entradaO[i:]
 
 				} else if strncmp(entradaL, "-f") {
-					i = strings.Index(entradaL, "->") + 2
+					i = find(entradaL, "->") + 2
 					for entradaL[i] == ' ' && len(entradaL) > 0 {
 						i++
 					}
 					entradaL = entradaL[i:]
 					entradaO = entradaO[i:]
 
-					i = strings.Index(entradaL, " ")
-					if i == -1 {
-						i = len(entradaL)
-					}
+					i = find(entradaL, " ")
 					f := entradaL[:i]
 					Fdisk = f
 					for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
@@ -64,17 +58,14 @@ func Lector(comando string) Structs.Resp {
 					entradaO = entradaO[i:]
 
 				} else if strncmp(entradaL, "-u") {
-					i = strings.Index(entradaL, "->") + 2
+					i = find(entradaL, "->") + 2
 					for entradaL[i] == ' ' && len(entradaL) > 0 {
 						i++
 					}
 					entradaL = entradaL[i:]
 					entradaO = entradaO[i:]
 
-					i = strings.Index(entradaL, " ")
-					if i == -1 {
-						i = len(entradaL)
-					}
+					i = find(entradaL, " ")
 					u := entradaL[:i]
 					Udisk = u
 					for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
@@ -84,7 +75,7 @@ func Lector(comando string) Structs.Resp {
 					entradaO = entradaO[i:]
 
 				} else if strncmp(entradaL, "-path") {
-					i = strings.Index(entradaL, "->") + 2
+					i = find(entradaL, "->") + 2
 					for entradaL[i] == ' ' && len(entradaL) > 0 {
 						i++
 					}
@@ -94,10 +85,8 @@ func Lector(comando string) Structs.Resp {
 					if entradaL[0] == '"' {
 						entradaL = entradaL[1:]
 						entradaO = entradaO[1:]
-						i = strings.Index(entradaL, "\"")
-						if i == -1 {
-							i = len(entradaL)
-						}
+
+						i = find(entradaL, "\"")
 						p := entradaO[:i]
 						Pdisk = p
 						i += 1
@@ -108,10 +97,7 @@ func Lector(comando string) Structs.Resp {
 						entradaO = entradaO[i:]
 
 					} else {
-						i = strings.Index(entradaL, " ")
-						if i == -1 {
-							i = len(entradaL)
-						}
+						i = find(entradaL, " ")
 						p := entradaO[:i]
 						Pdisk = p
 						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
@@ -149,4 +135,12 @@ func strncmp(entrada string, comparacion string) bool {
 	}
 
 	return true
+}
+
+func find(cadena string, substring string) int {
+	i := strings.Index(cadena, substring)
+	if i == -1 {
+		i = len(cadena)
+	}
+	return i
 }
