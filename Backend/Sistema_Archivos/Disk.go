@@ -7,10 +7,11 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
 var Sdisk = 0
-var Fdisk = "bf"
+var Fdisk = "ff"
 var Udisk = "m"
 var Pdisk = " "
 var Directorio_disk = ""
@@ -43,7 +44,7 @@ func mkdisk() Structs.Resp {
 		return Structs.Resp{Res: "EL DISCO YA EXISTE", Reporte: false}
 	}
 
-	Directorio_disk = getDirectorio(Pdisk)
+	Directorio_disk = GetDirectorio(Pdisk)
 	err := os.MkdirAll(Directorio_disk, 0777)
 	if err != nil {
 		fmt.Printf("%s", err)
@@ -75,14 +76,29 @@ func mkdisk() Structs.Resp {
 	binary.Write(&contenedor, binary.BigEndian, &buffer)
 
 	for i := 0; i < size; i++ {
-		var bufferControl bytes.Buffer
-		binary.Write(&bufferControl, binary.BigEndian, contenedor.Bytes())
-		_, err = file.Write(bufferControl.Bytes())
-		if err != nil {
-			fmt.Println(err)
-		}
+		EscribirFile(file, contenedor.Bytes())
 	}
 
+	mbr := Structs.MBR{}
+	mbr.Mbr_fecha_creacion = time.Now().Unix()
+	mbr.Mbr_disk_signature = int32(int(binary.BigEndian.Uint64([]byte(time.Now().String()))))
+	mbr.Mbr_tamanio = int32(size * 1024)
+	mbr.Disk_fit = Fdisk[0]
+	for j := 0; j < 4; j++ {
+		mbr.Mbr_partition[j].Part_start = -1
+	}
+
+	file.Seek(0, 0)
+	var bufferControl bytes.Buffer
+	err = binary.Write(&bufferControl, binary.BigEndian, mbr)
+	EscribirFile(file, bufferControl.Bytes())
+
+	file.Seek(0, 0)
+
+	/*var mbrP Structs.MBR
+	data := LeerFile(file, int(unsafe.Sizeof(mbrP)))
+	bufferD := bytes.NewBuffer(data)
+	err = binary.Read(bufferD, binary.BigEndian, &mbrP)*/
 	return Structs.Resp{Res: "SE CREO EL DISCO EXITOSAMENTE", Reporte: false}
 }
 
@@ -112,7 +128,7 @@ func validar() Structs.Bandera {
 	}
 }
 
-func getDirectorio(path string) string {
+func GetDirectorio(path string) string {
 	directorio := ""
 	aux := path
 	p := strings.Index(aux, "/")
@@ -123,4 +139,20 @@ func getDirectorio(path string) string {
 	}
 
 	return directorio
+}
+
+func EscribirFile(file *os.File, data []byte) {
+	_, err := file.Write(data)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+func LeerFile(file *os.File, number int) []byte {
+	bytes := make([]byte, number)
+	_, err := file.Read(bytes)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return bytes
 }

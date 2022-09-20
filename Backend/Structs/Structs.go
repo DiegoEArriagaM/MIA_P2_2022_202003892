@@ -1,7 +1,5 @@
 package Structs
 
-import "time"
-
 // Structs de administrador
 type Resp struct {
 	Res     string `json:"res"`
@@ -24,27 +22,27 @@ type Comando struct {
 
 // Structs del Sistema de Archivos
 type Partition struct {
-	part_status byte
-	part_type   byte
-	part_fit    byte
-	part_start  int
-	part_s      int
-	part_name   [16]byte
+	Part_status byte
+	Part_type   byte
+	Part_fit    byte
+	Part_start  int32
+	Part_s      int32
+	Part_name   [16]byte
 }
 
 type MBR struct {
-	mbr_tamanio        int
-	time_t             time.Time
-	mbr_disk_signature int
-	disk_fit           byte
-	mbr_partition      [4]Partition
+	Mbr_tamanio        int32
+	Mbr_fecha_creacion int64
+	Mbr_disk_signature int32
+	Disk_fit           byte
+	Mbr_partition      [4]Partition
 }
 
 type EBR struct {
-	part_status byte
-	part_fit    byte
-	part_start  int
-	part_s      int
-	part_next   int
-	part_name   [16]byte
+	Part_status byte
+	Part_fit    byte
+	Part_start  int32
+	Part_s      int32
+	Part_next   int32
+	Part_name   [16]byte
 }
