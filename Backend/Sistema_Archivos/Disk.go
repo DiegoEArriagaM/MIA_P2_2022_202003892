@@ -6,7 +6,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 )
 
@@ -45,11 +44,11 @@ func mkdisk() Structs.Resp {
 	}
 
 	Directorio_disk = getDirectorio(Pdisk)
-	/*err := os.MkdirAll(Directorio_disk, 0777)
+	err := os.MkdirAll(Directorio_disk, 0777)
 	if err != nil {
 		fmt.Printf("%s", err)
-	}*/
-	out, err := exec.Command("mkdir", Directorio_disk, " -p").Output()
+	}
+	/*out, err := exec.Command("mkdir", Directorio_disk, " -p").Output()
 	fmt.Println(string(out[:]))
 	if err != nil {
 		fmt.Printf("%s", err)
@@ -58,22 +57,30 @@ func mkdisk() Structs.Resp {
 	fmt.Println(string(out[:]))
 	if err != nil {
 		fmt.Printf("%s", err)
-	}
+	}*/
 
 	size := Sdisk
-	if Udisk = "m" {
+	if Udisk == "m" {
 		size = size * 1024
 	}
 
 	file, errf = os.OpenFile(Pdisk, os.O_RDWR|os.O_CREATE, 0777)
 
-	var bit bytes.Buffer
-	var temporal int8 = 0
-	s := &temporal
-	binary.Write(&bit, binary.BigEndian, s)
+	var contenedor bytes.Buffer
+	var buffer [1024]int8
+	for i := 0; i < 1024; i++ {
+		buffer[i] = 0
+	}
+	binary.Write(&contenedor, binary.BigEndian, &buffer)
+
 	i := 0
 	for i < size {
-		_, err = file.Write(bit.Bytes())
+		var bufferControl bytes.Buffer
+		binary.Write(&bufferControl, binary.BigEndian, contenedor.Bytes())
+		_, err = file.Write(bufferControl.Bytes())
+		if err != nil {
+			fmt.Println(err)
+		}
 		i++
 	}
 
