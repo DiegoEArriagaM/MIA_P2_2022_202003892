@@ -115,6 +115,17 @@ func Lector(comando string) Structs.Resp {
 			}
 
 			return mkdisk()
+		} else if strncmp(entradaL, "rmdisk") {
+			i := 6
+			for entradaL[i] == ' ' && len(entradaL) > 0 {
+				i++
+			}
+			entradaL = entradaL[i:]
+			entradaO = entradaO[i:]
+			for len(entradaO) > 0 {
+
+			}
+			return rmdisk()
 		} else {
 			return Structs.Resp{Res: "Comando no reconocido", Reporte: false}
 		}

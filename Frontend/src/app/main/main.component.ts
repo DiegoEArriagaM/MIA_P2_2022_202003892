@@ -17,7 +17,6 @@ export class MainComponent implements OnInit {
 
   terminal:any
 
-  //form:FormGroup
   
 
   constructor(private servicios:ServicioService) {
@@ -45,18 +44,60 @@ export class MainComponent implements OnInit {
   }
 
   mandarComando(){
+    this.terminal+=this.entrada.comando+"\n"
     this.limpiar()
     const command=this.getComand();
     this.servicios.Entrada(this.entrada).subscribe(
       data=>{
-        this.terminal+=this.entrada.comando+"\n"
+        
         let datos:any=data
         this.terminal+=datos.res+"\n"
-        this.terminal+="-------------------------------------------------------------------------------------------------------------------------\n"
-        this.terminal+="-------------------------------------------------------------------------------------------------------------------------\n"
         this.entrada.comando=""
         /*const dir="http://localhost:8000/Reportes/"+"ejemplo.pdf"
         window.open(dir)*/
+      },
+      err=>{
+        console.log(err)
+      }
+    )
+  }
+
+  onFileSelected(event:Event){
+    const targe=event.target as HTMLInputElement
+    let doc:any=targe.files as FileList
+    //Se informa que archivo se guardo
+    const name:string[]=doc[0].name.split(".")
+    if (name.length>1){
+      if (name[1]=="mia"){
+        const file: File = doc.item(0)
+        const reader: FileReader = new FileReader();
+        reader.readAsText(file);
+        reader.onload=(e)=>{
+          const content:string=reader.result as string
+          const lines: string[] = content.split('\n');
+          for(let line of lines){
+            this.exec(line)
+          }
+        }
+      }else{
+        alert("NO SE SELECCIONO UN ARCHIVO .mia")
+      }
+    }else{
+      alert("NO SE SELECCIONO UN ARCHIVO .mia")
+    }
+     
+  }
+
+  exec(comando:any){
+    this.entrada.comando=comando
+    this.terminal+=this.entrada.comando+"\n"
+    this.limpiar()
+    const command=this.getComand();
+    this.servicios.Entrada(this.entrada).subscribe(
+      data=>{
+        let datos:any=data
+        this.terminal+=datos.res
+        this.entrada.comando=""
       },
       err=>{
         console.log(err)

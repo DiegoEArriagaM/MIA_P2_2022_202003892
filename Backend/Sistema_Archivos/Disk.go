@@ -102,6 +102,10 @@ func mkdisk() Structs.Resp {
 	return Structs.Resp{Res: "SE CREO EL DISCO EXITOSAMENTE", Reporte: false}
 }
 
+func rmdisk() Structs.Resp {
+	return Structs.Resp{Res: "DISCO ELIMINADO", Reporte: false}
+}
+
 func validar() Structs.Bandera {
 	if Sdisk > 0 {
 		if strncmp(Fdisk, "bf") || strncmp(Fdisk, "ff") || strncmp(Fdisk, "wf") {
