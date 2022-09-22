@@ -10,6 +10,7 @@ import { ServicioService } from '../Coneccion/servicio.service';
 export class MainComponent implements OnInit {
   //JSON
   inicio:any
+  doc:any
 
   entrada:any={
     comando:''
@@ -64,12 +65,15 @@ export class MainComponent implements OnInit {
 
   onFileSelected(event:Event){
     const targe=event.target as HTMLInputElement
-    let doc:any=targe.files as FileList
+    this.doc=targe.files as FileList
+  }
+
+  ejecutar(){
     //Se informa que archivo se guardo
-    const name:string[]=doc[0].name.split(".")
+    const name:string[]=this.doc[0].name.split(".")
     if (name.length>1){
-      if (name[1]=="mia"){
-        const file: File = doc.item(0)
+      if (name[1]=="script"){
+        const file: File = this.doc.item(0)
         const reader: FileReader = new FileReader();
         reader.readAsText(file);
         reader.onload=(e)=>{
@@ -80,12 +84,11 @@ export class MainComponent implements OnInit {
           }
         }
       }else{
-        alert("NO SE SELECCIONO UN ARCHIVO .mia")
+        alert("NO SE SELECCIONO UN ARCHIVO .script")
       }
     }else{
-      alert("NO SE SELECCIONO UN ARCHIVO .mia")
+      alert("NO SE SELECCIONO UN ARCHIVO .script")
     }
-     
   }
 
   exec(comando:any){

@@ -13,13 +13,22 @@
   </div>
   <div class="d-grid gap-2">
     <button type="submit" class="btn btn-primary" id="btModificarD" (click)="mandarComando()">
-      Enter</button>
-  </div>
-  <div class="d-grid gap-2">
-    <input  type ="file" id = "fileinput" (change)="onFileSelected($event)" #fileUpload hidden>
-    <button class="btn btn-secondary" id="btCarga"  (click)="fileUpload.click()">Seleccionar Script</button>
+      Enter
+    </button>
   </div>
 </div>
+
+<nav class="navbar navbar-expand-lg bg-light">
+<div class="container-fluid">
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <input [(ngModel)]="this.doc[0].name" class="form-control me-2" type="text" placeholder="Script" aria-label="Search" disabled>
+      <input  type ="file" id = "fileinput" (change)="onFileSelected($event)" #fileUpload hidden>
+      <button type="button" class="btn btn-outline-danger" (click)="fileUpload.click()">Seleccionar Scrip</button>
+      <button type="button" class="btn btn-outline-success" (click)="ejecutar()">Ejecutar Scrip</button>
+  </div>
+</div>
+</nav>
+
 
 <div class="form-floating">
   <textarea [(ngModel)]="this.terminal" class="form-control" placeholder="Leave a comment here" id="terminal" name="terminal" style="height: 500px" disabled></textarea>

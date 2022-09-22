@@ -46,3 +46,46 @@ type EBR struct {
 	Part_next   int32
 	Part_name   [16]byte
 }
+
+type SuperBloque struct {
+	s_filesystem_type   int32
+	s_inodes_count      int32
+	s_blocks_count      int32
+	s_free_blocks_count int32
+	s_free_inodes_count int32
+	s_mtime             int64
+	s_umtime            int64
+	s_mnt_count         int32
+	s_magic             int32
+	s_inode_s           int32
+	s_block_s           int32
+	s_firts_ino         int32
+	s_first_blo         int32
+	s_bm_inode_start    int32
+	s_bm_block_start    int32
+	s_inode_start       int32
+	s_block_start       int32
+}
+type TablaInodo struct {
+	i_uid   int32
+	i_gid   int32
+	i_s     int32
+	i_atime int64
+	i_ctime int64
+	i_mtime int64
+	i_block [15]int32
+	i_type  byte
+	i_perm  int32
+}
+
+type Content struct {
+	b_name  [12]byte
+	b_inodo int32
+}
+
+type BloqueCarpeta struct {
+	b_content [4]Content
+}
+type BloqueArchivo struct {
+	b_content [64]byte
+}

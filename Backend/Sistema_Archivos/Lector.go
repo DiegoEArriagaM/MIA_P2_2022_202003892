@@ -23,8 +23,8 @@ func Lector(comando string) Structs.Resp {
 			entradaO = entradaO[i:]
 
 			for len(entradaO) > 0 {
-				if strncmp(entradaL, "-s") {
-					i = find(entradaL, "->") + 2
+				if strncmp(entradaL, "-size") {
+					i = find(entradaL, "=") + 1
 					for entradaL[i] == ' ' && len(entradaL) > 0 {
 						i++
 					}
@@ -40,8 +40,8 @@ func Lector(comando string) Structs.Resp {
 					entradaL = entradaL[i:]
 					entradaO = entradaO[i:]
 
-				} else if strncmp(entradaL, "-f") {
-					i = find(entradaL, "->") + 2
+				} else if strncmp(entradaL, "-fit") {
+					i = find(entradaL, "=") + 1
 					for entradaL[i] == ' ' && len(entradaL) > 0 {
 						i++
 					}
@@ -57,8 +57,8 @@ func Lector(comando string) Structs.Resp {
 					entradaL = entradaL[i:]
 					entradaO = entradaO[i:]
 
-				} else if strncmp(entradaL, "-u") {
-					i = find(entradaL, "->") + 2
+				} else if strncmp(entradaL, "-unit") {
+					i = find(entradaL, "=") + 1
 					for entradaL[i] == ' ' && len(entradaL) > 0 {
 						i++
 					}
@@ -75,7 +75,7 @@ func Lector(comando string) Structs.Resp {
 					entradaO = entradaO[i:]
 
 				} else if strncmp(entradaL, "-path") {
-					i = find(entradaL, "->") + 2
+					i = find(entradaL, "=") + 1
 					for entradaL[i] == ' ' && len(entradaL) > 0 {
 						i++
 					}
@@ -123,7 +123,44 @@ func Lector(comando string) Structs.Resp {
 			entradaL = entradaL[i:]
 			entradaO = entradaO[i:]
 			for len(entradaO) > 0 {
+				if strncmp(entradaL, "-path") {
+					i = find(entradaL, "=") + 1
+					for entradaL[i] == ' ' && len(entradaL) > 0 {
+						i++
+					}
+					entradaL = entradaL[i:]
+					entradaO = entradaO[i:]
 
+					if entradaL[0] == '"' {
+						entradaL = entradaL[1:]
+						entradaO = entradaO[1:]
+
+						i = find(entradaL, "\"")
+						p := entradaO[:i]
+						Pdisk = p
+						i += 1
+						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+							i++
+						}
+						entradaL = entradaL[i:]
+						entradaO = entradaO[i:]
+
+					} else {
+						i = find(entradaL, " ")
+						p := entradaO[:i]
+						Pdisk = p
+						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+							i++
+						}
+						entradaL = entradaL[i:]
+						entradaO = entradaO[i:]
+					}
+
+				} else if strncmp(entradaL, "#") {
+					break
+				} else {
+					return Structs.Resp{Res: "ERROR EN EL COMANDO DE ENTRADA: " + entradaO, Reporte: false}
+				}
 			}
 			return rmdisk()
 		} else {
