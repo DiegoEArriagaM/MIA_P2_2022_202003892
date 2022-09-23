@@ -103,6 +103,46 @@ func mkdisk() Structs.Resp {
 }
 
 func rmdisk() Structs.Resp {
+	extension := ""
+	if Pdisk != " " {
+		i := find(Pdisk, ".")
+		extension = Pdisk[i+1:]
+		if !strncmp(extension, "dk") {
+			return Structs.Resp{Res: "EXTENSION INCORRECTA", Reporte: false}
+		}
+	} else {
+		return Structs.Resp{Res: "ASEGURESE DE ESCRIBIR UN RUTA", Reporte: false}
+	}
+
+	var file *os.File
+	var errf error
+	file, errf = os.OpenFile(Pdisk, os.O_RDWR, 0666)
+	file, errf = os.OpenFile(Pdisk, os.O_RDWR, 0666)
+	defer func() {
+		reco := recover()
+		if reco != nil {
+			fmt.Println(reco)
+		}
+		Sdisk = 0
+		Fdisk = "bf"
+		Udisk = "m"
+		Pdisk = " "
+		Directorio_disk = ""
+		if file != nil {
+			file.Close()
+		}
+
+	}()
+
+	if errf != nil {
+		return Structs.Resp{Res: "NO EXISTE EL DISCO", Reporte: false}
+	}
+
+	err := os.Remove(Pdisk)
+	if err != nil {
+		return Structs.Resp{Res: "Error al eliminar el disco", Reporte: false}
+	}
+
 	return Structs.Resp{Res: "DISCO ELIMINADO", Reporte: false}
 }
 
@@ -113,7 +153,7 @@ func validar() Structs.Bandera {
 				if Pdisk != " " {
 					i := find(Pdisk, ".")
 					extension := Pdisk[i+1:]
-					if strncmp(extension, "dsk") {
+					if strncmp(extension, "dk") {
 						return Structs.Bandera{Val: true, Men: ""}
 					} else {
 						return Structs.Bandera{Val: false, Men: "EXTENSION INCORRECTA"}

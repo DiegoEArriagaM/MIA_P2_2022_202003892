@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { take } from 'rxjs';
 import { ServicioService } from '../Coneccion/servicio.service';
 //import {graphviz} from 'd3-graphviz';
 
@@ -11,12 +12,15 @@ export class MainComponent implements OnInit {
   //JSON
   inicio:any
   doc:any
+  nameDoc:any=""
 
   entrada:any={
     comando:''
   }
 
   terminal:any
+  resp:any=""
+  t:any=1
 
   
 
@@ -45,20 +49,27 @@ export class MainComponent implements OnInit {
   }
 
   mandarComando(){
-    this.terminal+=this.entrada.comando+"\n"
-    this.limpiar()
+    const r=this.t
+    this.entrada.comando=this.limpiar(this.entrada.comando)
     const command=this.getComand();
     this.servicios.Entrada(this.entrada).subscribe(
       data=>{
-        
         let datos:any=data
-        this.terminal+=datos.res+"\n"
+        this.terminal+=this.t+")"+this.entrada.comando+"\n"
+        if(datos.res!=""){
+          this.resp+=r+")"+datos.res+"\n"
+        }
+        this.entrada.comando=""
+        this.t=this.t+1
         this.entrada.comando=""
         /*const dir="http://localhost:8000/Reportes/"+"ejemplo.pdf"
         window.open(dir)*/
       },
       err=>{
         console.log(err)
+      },() => {
+        // 'onCompleted' callback.
+        // No errors, route to new page here
       }
     )
   }
@@ -66,6 +77,7 @@ export class MainComponent implements OnInit {
   onFileSelected(event:Event){
     const targe=event.target as HTMLInputElement
     this.doc=targe.files as FileList
+    this.nameDoc=this.doc[0].name
   }
 
   ejecutar(){
@@ -79,8 +91,10 @@ export class MainComponent implements OnInit {
         reader.onload=(e)=>{
           const content:string=reader.result as string
           const lines: string[] = content.split('\n');
-          for(let line of lines){
-            this.exec(line)
+          let j=0
+          while(j<lines.length){
+            this.exec(lines[j])
+            j=j+1
           }
         }
       }else{
@@ -92,14 +106,20 @@ export class MainComponent implements OnInit {
   }
 
   exec(comando:any){
+    const r=this.t
+    this.terminal+=this.t+")"+comando+"\n"
+    this.t=this.t+1
+    console.log(comando)
     this.entrada.comando=comando
-    this.terminal+=this.entrada.comando+"\n"
-    this.limpiar()
+    this.entrada.comando=this.limpiar(this.entrada.comando)
     const command=this.getComand();
+    let datos:any
     this.servicios.Entrada(this.entrada).subscribe(
       data=>{
-        let datos:any=data
-        this.terminal+=datos.res
+        datos=data
+        if(datos.res!=""){
+          this.resp+=r+")"+datos.res+"\n"
+        }
         this.entrada.comando=""
       },
       err=>{
@@ -108,15 +128,16 @@ export class MainComponent implements OnInit {
     )
   }
 
-  limpiar(){
-    const str=this.entrada.comando
-    this.entrada.comando=str.replaceAll('\n',' ')
-    this.entrada.comando=str.replaceAll('\t',' ')
-    this.entrada.comando=str.replaceAll('\r',' ')
+  limpiar(comando:any):string{
+    let str=comando
+    str=str.replaceAll('\n',' ')
+    str=str.replaceAll('\t',' ')
+    str=str.replaceAll('\r',' ')
 
     while(this.entrada.comando.charAt(0)==' '){
       this.entrada.comando=this.entrada.comando.replace(' ','')
     }
+    return str
   }
 
   getComand():any{
