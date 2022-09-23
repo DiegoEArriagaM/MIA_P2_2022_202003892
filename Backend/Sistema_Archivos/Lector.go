@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+var UsuarioL Structs.Usuario
+
 func Lector(comando string) Structs.Resp {
 	res := ""
 	entradaO := comando
@@ -13,7 +15,7 @@ func Lector(comando string) Structs.Resp {
 
 	if len(entradaO) > 0 {
 		if strncmp(entradaL, "#") {
-			return Structs.Resp{Res: res, Reporte: false}
+			return Structs.Resp{Res: res}
 		} else if strncmp(entradaL, "mkdisk") {
 			i := 6
 			for entradaL[i] == ' ' && len(entradaL) > 0 {
@@ -110,7 +112,7 @@ func Lector(comando string) Structs.Resp {
 				} else if strncmp(entradaL, "#") {
 					break
 				} else {
-					return Structs.Resp{Res: "ERROR EN EL COMANDO DE ENTRADA: " + entradaO, Reporte: false}
+					return Structs.Resp{Res: "ERROR EN EL COMANDO DE ENTRADA: " + entradaO}
 				}
 			}
 
@@ -159,16 +161,165 @@ func Lector(comando string) Structs.Resp {
 				} else if strncmp(entradaL, "#") {
 					break
 				} else {
-					return Structs.Resp{Res: "ERROR EN EL COMANDO DE ENTRADA: " + entradaO, Reporte: false}
+					return Structs.Resp{Res: "ERROR EN EL COMANDO DE ENTRADA: " + entradaO}
 				}
 			}
 			return rmdisk()
+		} else if strncmp(entradaL, "fdisk") {
+			i := 5
+			for entradaL[i] == ' ' && len(entradaL) > 0 {
+				i++
+			}
+			entradaL = entradaL[i:]
+			entradaO = entradaO[i:]
+			for len(entradaO) > 0 {
+				if strncmp(entradaL, "-size") {
+					i = find(entradaL, "=") + 1
+					for entradaL[i] == ' ' && len(entradaL) > 0 {
+						i++
+					}
+					entradaL = entradaL[i:]
+					entradaO = entradaO[i:]
+
+					i = find(entradaL, " ")
+					s, _ := strconv.Atoi(entradaL[:i])
+					Spart = s
+					for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+						i++
+					}
+					entradaL = entradaL[i:]
+					entradaO = entradaO[i:]
+
+				} else if strncmp(entradaL, "-unit") {
+					i = find(entradaL, "=") + 1
+					for entradaL[i] == ' ' && len(entradaL) > 0 {
+						i++
+					}
+					entradaL = entradaL[i:]
+					entradaO = entradaO[i:]
+
+					i = find(entradaL, " ")
+					u := entradaL[:i]
+					Upart = int32(u[0])
+					for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+						i++
+					}
+					entradaL = entradaL[i:]
+					entradaO = entradaO[i:]
+
+				} else if strncmp(entradaL, "-path") {
+					i = find(entradaL, "=") + 1
+					for entradaL[i] == ' ' && len(entradaL) > 0 {
+						i++
+					}
+					entradaL = entradaL[i:]
+					entradaO = entradaO[i:]
+
+					if entradaL[0] == '"' {
+						entradaL = entradaL[1:]
+						entradaO = entradaO[1:]
+
+						i = find(entradaL, "\"")
+						p := entradaO[:i]
+						Ppart = p
+						i += 1
+						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+							i++
+						}
+						entradaL = entradaL[i:]
+						entradaO = entradaO[i:]
+
+					} else {
+						i = find(entradaL, " ")
+						p := entradaO[:i]
+						Ppart = p
+						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+							i++
+						}
+						entradaL = entradaL[i:]
+						entradaO = entradaO[i:]
+					}
+
+				} else if strncmp(entradaL, "-type") {
+					i = find(entradaL, "=") + 1
+					for entradaL[i] == ' ' && len(entradaL) > 0 {
+						i++
+					}
+					entradaL = entradaL[i:]
+					entradaO = entradaO[i:]
+
+					i = find(entradaL, " ")
+					t := entradaL[:i]
+					Tpart = int32(t[0])
+					for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+						i++
+					}
+					entradaL = entradaL[i:]
+					entradaO = entradaO[i:]
+
+				} else if strncmp(entradaL, "-fit") {
+					i = find(entradaL, "=") + 1
+					for entradaL[i] == ' ' && len(entradaL) > 0 {
+						i++
+					}
+					entradaL = entradaL[i:]
+					entradaO = entradaO[i:]
+
+					i = find(entradaL, " ")
+					f := entradaL[:i]
+					Fpart = int32(f[0])
+					for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+						i++
+					}
+					entradaL = entradaL[i:]
+					entradaO = entradaO[i:]
+
+				} else if strncmp(entradaL, "-name") {
+					i = find(entradaL, "=") + 1
+					for entradaL[i] == ' ' && len(entradaL) > 0 {
+						i++
+					}
+					entradaL = entradaL[i:]
+					entradaO = entradaO[i:]
+
+					if entradaL[0] == '"' {
+						entradaL = entradaL[1:]
+						entradaO = entradaO[1:]
+
+						i = find(entradaL, "\"")
+						n := entradaO[:i]
+						Namepart = n
+						i += 1
+						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+							i++
+						}
+						entradaL = entradaL[i:]
+						entradaO = entradaO[i:]
+
+					} else {
+						i = find(entradaL, " ")
+						n := entradaO[:i]
+						Namepart = n
+						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+							i++
+						}
+						entradaL = entradaL[i:]
+						entradaO = entradaO[i:]
+					}
+
+				} else if strncmp(entradaL, "#") {
+					break
+				} else {
+					return Structs.Resp{Res: "ERROR EN EL COMANDO DE ENTRADA: " + entradaO}
+				}
+			}
+			return fdisk()
 		} else {
-			return Structs.Resp{Res: "Comando no reconocido", Reporte: false}
+			return Structs.Resp{Res: "Comando no reconocido"}
 		}
 	}
 
-	return Structs.Resp{Res: res, Reporte: false}
+	return Structs.Resp{Res: res}
 }
 
 func strncmp(entrada string, comparacion string) bool {

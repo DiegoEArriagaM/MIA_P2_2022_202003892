@@ -21,15 +21,22 @@ func main() {
 
 	router.HandleFunc("/Entrada", func(writer http.ResponseWriter, req *http.Request) {
 		body, _ := ioutil.ReadAll(req.Body) // response body is []byte
-		var command Structs.Comando
-		if err := json.Unmarshal(body, &command); err != nil { // Parse []byte to the go struct pointer
+		var entrada Structs.Entrada
+		if err := json.Unmarshal(body, &entrada); err != nil { // Parse []byte to the go struct pointer
 			fmt.Println("Error al recibir el comando")
 		}
 		reco := recover()
 		if reco != nil {
 			json.NewEncoder(writer).Encode(Structs.Inicio{Res: "Error en la entrada"})
 		}
-		r := Sistema_Archivos.Lector(command.Command)
+
+		Sistema_Archivos.UsuarioL = Structs.Usuario{
+			IdU:     entrada.IdU,
+			IdG:     entrada.IdG,
+			IdMount: entrada.IdMount,
+			NombreU: entrada.NombreU,
+		}
+		r := Sistema_Archivos.Lector(entrada.Command)
 		json.NewEncoder(writer).Encode(r)
 	}).Methods("GET", "POST")
 

@@ -19,7 +19,7 @@ var Directorio_disk = ""
 func mkdisk() Structs.Resp {
 	val := validar()
 	if !val.Val {
-		return Structs.Resp{Res: val.Men, Reporte: false}
+		return Structs.Resp{Res: val.Men}
 	}
 
 	var file *os.File
@@ -41,7 +41,7 @@ func mkdisk() Structs.Resp {
 
 	}()
 	if errf == nil {
-		return Structs.Resp{Res: "EL DISCO YA EXISTE", Reporte: false}
+		return Structs.Resp{Res: "EL DISCO YA EXISTE"}
 	}
 
 	Directorio_disk = GetDirectorio(Pdisk)
@@ -99,7 +99,7 @@ func mkdisk() Structs.Resp {
 	data := LeerFile(file, int(unsafe.Sizeof(mbrP)))
 	bufferD := bytes.NewBuffer(data)
 	err = binary.Read(bufferD, binary.BigEndian, &mbrP)*/
-	return Structs.Resp{Res: "SE CREO EL DISCO EXITOSAMENTE", Reporte: false}
+	return Structs.Resp{Res: "SE CREO EL DISCO EXITOSAMENTE"}
 }
 
 func rmdisk() Structs.Resp {
@@ -108,10 +108,10 @@ func rmdisk() Structs.Resp {
 		i := find(Pdisk, ".")
 		extension = Pdisk[i+1:]
 		if !strncmp(extension, "dk") {
-			return Structs.Resp{Res: "EXTENSION INCORRECTA", Reporte: false}
+			return Structs.Resp{Res: "EXTENSION INCORRECTA"}
 		}
 	} else {
-		return Structs.Resp{Res: "ASEGURESE DE ESCRIBIR UN RUTA", Reporte: false}
+		return Structs.Resp{Res: "ASEGURESE DE ESCRIBIR UN RUTA"}
 	}
 
 	var file *os.File
@@ -135,15 +135,15 @@ func rmdisk() Structs.Resp {
 	}()
 
 	if errf != nil {
-		return Structs.Resp{Res: "NO EXISTE EL DISCO", Reporte: false}
+		return Structs.Resp{Res: "NO EXISTE EL DISCO"}
 	}
 
 	err := os.Remove(Pdisk)
 	if err != nil {
-		return Structs.Resp{Res: "Error al eliminar el disco", Reporte: false}
+		return Structs.Resp{Res: "Error al eliminar el disco"}
 	}
 
-	return Structs.Resp{Res: "DISCO ELIMINADO", Reporte: false}
+	return Structs.Resp{Res: "DISCO ELIMINADO"}
 }
 
 func validar() Structs.Bandera {
