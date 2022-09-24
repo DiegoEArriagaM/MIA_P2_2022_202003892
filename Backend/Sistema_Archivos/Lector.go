@@ -200,7 +200,7 @@ func Lector(comando string) Structs.Resp {
 
 					i = find(entradaL, " ")
 					u := entradaL[:i]
-					Upart = int32(u[0])
+					Upart = u[0]
 					for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
 						i++
 					}
@@ -250,7 +250,7 @@ func Lector(comando string) Structs.Resp {
 
 					i = find(entradaL, " ")
 					t := entradaL[:i]
-					Tpart = int32(t[0])
+					Tpart = t[0]
 					for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
 						i++
 					}
@@ -267,7 +267,7 @@ func Lector(comando string) Structs.Resp {
 
 					i = find(entradaL, " ")
 					f := entradaL[:i]
-					Fpart = int32(f[0])
+					Fpart = f[0]
 					for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
 						i++
 					}

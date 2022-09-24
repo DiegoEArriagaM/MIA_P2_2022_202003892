@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { take } from 'rxjs';
 import { ServicioService } from '../Coneccion/servicio.service';
 //import {graphviz} from 'd3-graphviz';
 
@@ -15,16 +14,36 @@ export class MainComponent implements OnInit {
   nameDoc:any=""
 
   entrada:any={
-    comando:''
+    comando:'',
+    idU: 0,
+	  idG:0,
+	  idMoun:" ",
+	  nombreU:" ",
+    login:false
+
   }
 
   terminal:any
   resp:any=""
   t:any=1
+  
 
   
 
   constructor(private servicios:ServicioService) {
+    if(sessionStorage['idU']==undefined){
+      this.entrada.idU=0
+      this.entrada.idG=0
+      this.entrada.idMoun=" "
+      this.entrada.nombreU=" "
+      this.entrada.login=false
+    }else{
+      this.entrada.idU=sessionStorage['idU']
+      this.entrada.idG=sessionStorage['idG']
+      this.entrada.idMoun=sessionStorage['idMoun']
+      this.entrada.nombreU=sessionStorage['nombreU']
+      this.entrada.login=sessionStorage['login']
+    }
     this.terminal=""
     this.inicio=""
     this.servicios.Inicio().subscribe(

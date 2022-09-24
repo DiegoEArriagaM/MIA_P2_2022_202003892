@@ -93,12 +93,9 @@ func mkdisk() Structs.Resp {
 	err = binary.Write(&bufferControl, binary.BigEndian, mbr)
 	EscribirFile(file, bufferControl.Bytes())
 
-	file.Seek(0, 0)
-
-	/*var mbrP Structs.MBR
-	data := LeerFile(file, int(unsafe.Sizeof(mbrP)))
-	bufferD := bytes.NewBuffer(data)
-	err = binary.Read(bufferD, binary.BigEndian, &mbrP)*/
+	/*file.Seek(0, 0)
+	var mbrP Structs.MBR
+	err = binary.Read(LeerFile(file, int(unsafe.Sizeof(mbrP))), binary.BigEndian, &mbrP)*/
 	return Structs.Resp{Res: "SE CREO EL DISCO EXITOSAMENTE"}
 }
 
@@ -192,11 +189,12 @@ func EscribirFile(file *os.File, data []byte) {
 	}
 }
 
-func LeerFile(file *os.File, number int) []byte {
-	bytes := make([]byte, number)
-	_, err := file.Read(bytes)
+func LeerFile(file *os.File, number int) *bytes.Buffer {
+	data := make([]byte, number)
+	_, err := file.Read(data)
 	if err != nil {
 		fmt.Println(err)
 	}
-	return bytes
+	bufferD := bytes.NewBuffer(data)
+	return bufferD
 }
