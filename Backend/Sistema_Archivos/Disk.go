@@ -31,7 +31,7 @@ func mkdisk() Structs.Resp {
 			fmt.Println(reco)
 		}
 		Sdisk = 0
-		Fdisk = "bf"
+		Fdisk = "ff"
 		Udisk = "m"
 		Pdisk = " "
 		Directorio_disk = ""
@@ -121,7 +121,7 @@ func rmdisk() Structs.Resp {
 			fmt.Println(reco)
 		}
 		Sdisk = 0
-		Fdisk = "bf"
+		Fdisk = "ff"
 		Udisk = "m"
 		Pdisk = " "
 		Directorio_disk = ""
