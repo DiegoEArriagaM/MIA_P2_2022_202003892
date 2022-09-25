@@ -176,9 +176,9 @@ func particionExtendida() Structs.Resp {
 					posEBR = int(p.Part_start)
 					mbr.Mbr_partition[pos] = p
 					file.Seek(0, 0)
-					var bufferControl bytes.Buffer
-					errf = binary.Write(&bufferControl, binary.BigEndian, mbr)
-					EscribirFile(file, bufferControl.Bytes())
+					var bufferMBR bytes.Buffer
+					errf = binary.Write(&bufferMBR, binary.BigEndian, mbr)
+					EscribirFile(file, bufferMBR.Bytes())
 
 					ebr := Structs.EBR{}
 					ebr.Part_next = -1
@@ -186,8 +186,9 @@ func particionExtendida() Structs.Resp {
 					ebr.Part_s = -1
 					ebr.Part_status = '0'
 					file.Seek(int64(posEBR), 0)
-					errf = binary.Write(&bufferControl, binary.BigEndian, ebr)
-					EscribirFile(file, bufferControl.Bytes())
+					var bufferEBR bytes.Buffer
+					errf = binary.Write(&bufferEBR, binary.BigEndian, ebr)
+					EscribirFile(file, bufferEBR.Bytes())
 					file.Close()
 
 					men := ""
@@ -217,7 +218,126 @@ func particionExtendida() Structs.Resp {
 }
 
 func particionLogica() Structs.Resp {
-	return Structs.Resp{Res: "Algo salio mal"}
+	pos := -1
+	file, errf := os.OpenFile(Ppart, os.O_RDWR, 0777)
+	if errf == nil {
+		if existeParticionExt(Ppart) {
+			if !existeNombreP(Ppart, Namepart) {
+				file.Seek(0, 0)
+				mbr := Structs.MBR{}
+				errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(mbr))), binary.BigEndian, &mbr)
+
+				for i := 0; i < 4; i++ {
+					if mbr.Mbr_partition[i].Part_type == 'e' {
+						pos = i
+						break
+					}
+				}
+
+				if pos != -1 {
+					ebrAux := Structs.EBR{}
+					espacioOcupado := 0
+					file.Seek(int64(mbr.Mbr_partition[pos].Part_start), 0)
+					errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(ebrAux))), binary.BigEndian, &ebrAux)
+					if ebrAux.Part_next != -1 || ebrAux.Part_s != -1 {
+						espacioOcupado += int(unsafe.Sizeof(Structs.EBR{})) + int(ebrAux.Part_s)
+						tell, _ := file.Seek(0, os.SEEK_CUR)
+						for ebrAux.Part_next != -1 &&
+							(int(tell) < int(mbr.Mbr_partition[pos].Part_start)+int(mbr.Mbr_partition[pos].Part_s)) {
+							file.Seek(int64(ebrAux.Part_next), 0)
+							errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(ebrAux))), binary.BigEndian, &ebrAux)
+							espacioOcupado += int(unsafe.Sizeof(Structs.EBR{})) + int(ebrAux.Part_s)
+						}
+						var newE Structs.EBR
+						newE.Part_fit = Fpart
+						newE.Part_start = ebrAux.Part_start + int32(unsafe.Sizeof(Structs.EBR{})) + ebrAux.Part_s
+						newE.Part_status = '0'
+						newE.Part_next = -1
+						if Upart == 'b' {
+							newE.Part_s = int32(Spart)
+						} else if Upart == 'k' {
+							newE.Part_s = int32(Spart * 1024)
+						} else if Upart == 'm' {
+							newE.Part_s = int32(Spart * 1024 * 1024)
+						}
+						for i := 0; i < 16; i++ {
+							if i == len(Namepart) {
+								break
+							}
+							newE.Part_name[i] = Namepart[i]
+						}
+						espacioD := int(mbr.Mbr_partition[pos].Part_s) - espacioOcupado
+						espacioNewE := int(unsafe.Sizeof(Structs.EBR{})) + int(newE.Part_s)
+						if espacioD >= espacioNewE {
+							ebrAux.Part_next = newE.Part_start
+							file.Seek(int64(ebrAux.Part_start), 0)
+							var bufferEBRA bytes.Buffer
+							errf = binary.Write(&bufferEBRA, binary.BigEndian, ebrAux)
+							EscribirFile(file, bufferEBRA.Bytes())
+
+							file.Seek(int64(newE.Part_start), 0)
+							var bufferEBRN bytes.Buffer
+							errf = binary.Write(&bufferEBRN, binary.BigEndian, newE)
+							EscribirFile(file, bufferEBRN.Bytes())
+							file.Close()
+							men := ""
+							men += "SE CREO LA PARTICION \n"
+							men += "Particion: " + string(newE.Part_name[:]) + "\n"
+							men += "Tipo: Logica\n"
+							men += "Inicio: " + strconv.Itoa(int(newE.Part_start)) + "\n"
+							men += "Tamanio: " + strconv.Itoa(int(newE.Part_s))
+							return Structs.Resp{Res: men}
+						}
+						return Structs.Resp{Res: "NO HAY ESPACIO PARA CREAR LA PARTICION LOGICA"}
+					} else {
+						ebrAux.Part_fit = Fpart
+						ebrAux.Part_start = mbr.Mbr_partition[pos].Part_start
+						ebrAux.Part_status = '0'
+						if Upart == 'b' {
+							ebrAux.Part_s = int32(Spart)
+						} else if Upart == 'k' {
+							ebrAux.Part_s = int32(Spart * 1024)
+						} else if Upart == 'm' {
+							ebrAux.Part_s = int32(Spart * 1024 * 1024)
+						}
+						ebrAux.Part_next = -1
+						for i := 0; i < 16; i++ {
+							if i == len(Namepart) {
+								break
+							}
+							ebrAux.Part_name[i] = Namepart[i]
+						}
+
+						if mbr.Mbr_partition[pos].Part_s >= (ebrAux.Part_s + int32(unsafe.Sizeof(Structs.EBR{}))) {
+							file.Seek(0, 0)
+							var bufferMBR bytes.Buffer
+							errf = binary.Write(&bufferMBR, binary.BigEndian, mbr)
+							EscribirFile(file, bufferMBR.Bytes())
+
+							file.Seek(int64(mbr.Mbr_partition[pos].Part_start), 0)
+							var bufferEBR bytes.Buffer
+							errf = binary.Write(&bufferEBR, binary.BigEndian, ebrAux)
+							EscribirFile(file, bufferEBR.Bytes())
+							file.Close()
+							men := ""
+							men += "SE CREO LA PARTICION \n"
+							men += "Particion: " + string(ebrAux.Part_name[:]) + "\n"
+							men += "Tipo: Logica\n"
+							men += "Inicio: " + strconv.Itoa(int(ebrAux.Part_start)) + "\n"
+							men += "Tamanio: " + strconv.Itoa(int(ebrAux.Part_s))
+							return Structs.Resp{Res: men}
+						}
+						file.Close()
+						return Structs.Resp{Res: "NO HAY ESPACIO PARA CREAR LA PARTICION LOGICA"}
+					}
+				}
+
+			}
+			return Structs.Resp{Res: "YA EXISTE LA PARTICION"}
+		}
+		return Structs.Resp{Res: "NO EXISTE UNA PARTICION EXTENDIDA PARA ALMACENAR LA PARTICION LOGICA"}
+	}
+	return Structs.Resp{Res: "DISCO INEXISTENTE"}
 }
 
 func espacioDisponible(s int, p string, u byte, pos int) bool {
@@ -284,13 +404,13 @@ func existeNombreP(p string, name string) bool {
 			}
 			if ebr.Part_next != -1 || ebr.Part_s != -1 {
 				name1 = string(ebr.Part_name[:])
-				if name1 == name {
+				if strncmp(name, name1) {
 					file.Close()
 					return true
 				}
 				for ebr.Part_next != -1 {
 					name1 = string(ebr.Part_name[:])
-					if name1 == name {
+					if strncmp(name, name1) {
 						file.Close()
 						return true
 					}

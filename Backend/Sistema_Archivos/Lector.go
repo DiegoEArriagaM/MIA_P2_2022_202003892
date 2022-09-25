@@ -328,6 +328,9 @@ func strncmp(entrada string, comparacion string) bool {
 	}
 
 	for i := 0; i < len(comparacion); i++ {
+		if i >= len(entrada) {
+			return false
+		}
 		if entrada[i] != comparacion[i] {
 			return false
 		}
