@@ -395,7 +395,7 @@ func Lector(comando string) Structs.Resp {
 					return Structs.Resp{Res: "ERROR EN EL COMANDO DE ENTRADA: " + entradaO}
 				}
 			}
-			mount()
+			return mount()
 		} else {
 			return Structs.Resp{Res: "Comando no reconocido"}
 		}

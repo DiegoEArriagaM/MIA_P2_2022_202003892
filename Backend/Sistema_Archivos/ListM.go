@@ -27,7 +27,7 @@ func (L *MountList) add(path string, name string, ty byte, start int, pos int) S
 		num := L.getNum(path)
 		letra := L.getLetra(path)
 
-		var nuevo *Nodo_M
+		nuevo := &Nodo_M{}
 		nuevo.Path = path
 		nuevo.Name = name
 		nuevo.Type = ty
@@ -43,6 +43,7 @@ func (L *MountList) add(path string, name string, ty byte, start int, pos int) S
 			L.Ultimo.Sig = nuevo
 			L.Ultimo = nuevo
 		}
+		return Structs.Resp{Res: "SE MONTO LA PARTICION CON ID " + L.Ultimo.Id}
 	}
 	return Structs.Resp{Res: "LA PARTICION " + name + " YA ESTA MONTADA"}
 }

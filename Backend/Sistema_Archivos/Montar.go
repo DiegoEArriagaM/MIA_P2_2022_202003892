@@ -24,9 +24,9 @@ func mount() Structs.Resp {
 	}()
 
 	if Pmontar != " " {
-		if Namepart != " " {
+		if Namemontar != " " {
 			pos := -1
-			file, errf := os.OpenFile(Ppart, os.O_RDWR, 0777)
+			file, errf := os.OpenFile(Pmontar, os.O_RDWR, 0777)
 			if errf == nil {
 				file.Seek(0, 0)
 				mbr := Structs.MBR{}
@@ -46,11 +46,10 @@ func mount() Structs.Resp {
 						}
 						if ebr.Part_next != -1 || ebr.Part_s != -1 {
 							name1 = string(ebr.Part_name[:])
-							if strncmp(Namemontar, name1) {
+							if strncmp(name1, Namemontar) {
 								if ebr.Part_status == '0' || ebr.Part_status == '1' {
 									ebr.Part_status = '1'
 								}
-								Mlist.add(Pmontar, Namemontar, 'l', int(ebr.Part_start), -1)
 
 								file.Seek(int64(ebr.Part_start), 0)
 								var bufferEBRN bytes.Buffer
@@ -68,18 +67,17 @@ func mount() Structs.Resp {
 									EscribirFile(file, bufferSB.Bytes())
 								}
 								file.Close()
-								return Structs.Resp{Res: "ID: " + Mlist.Ultimo.Id}
+								return Mlist.add(Pmontar, Namemontar, 'l', int(ebr.Part_start), -1)
 
 							} else if ebr.Part_next != -1 {
 								file.Seek(int64(ebr.Part_next), 0)
 								errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(ebr))), binary.BigEndian, &ebr)
 								for true {
 									name1 = string(ebr.Part_name[:])
-									if strncmp(Namemontar, name1) {
+									if strncmp(name1, Namemontar) {
 										if ebr.Part_status == '0' || ebr.Part_status == '1' {
 											ebr.Part_status = '1'
 										}
-										Mlist.add(Pmontar, Namemontar, 'l', int(ebr.Part_start), -1)
 
 										file.Seek(int64(ebr.Part_start), 0)
 										var bufferEBRN bytes.Buffer
@@ -97,7 +95,7 @@ func mount() Structs.Resp {
 											EscribirFile(file, bufferSB.Bytes())
 										}
 										file.Close()
-										return Structs.Resp{Res: "ID: " + Mlist.Ultimo.Id}
+										return Mlist.add(Pmontar, Namemontar, 'l', int(ebr.Part_start), -1)
 
 									}
 
