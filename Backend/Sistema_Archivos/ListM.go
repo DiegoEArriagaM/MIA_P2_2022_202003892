@@ -1,6 +1,9 @@
 package Sistema_Archivos
 
-import "Backend/Structs"
+import (
+	"Backend/Structs"
+	"strconv"
+)
 
 type Nodo_M struct {
 	Path  string
@@ -21,7 +24,25 @@ type MountList struct {
 
 func (L *MountList) add(path string, name string, ty byte, start int, pos int) Structs.Resp {
 	if !L.existMount(path, name) {
+		num := L.getNum(path)
+		letra := L.getLetra(path)
 
+		var nuevo *Nodo_M
+		nuevo.Path = path
+		nuevo.Name = name
+		nuevo.Type = ty
+		nuevo.Num = num
+		nuevo.Letra = letra
+		nuevo.Start = start
+		nuevo.Pos = pos
+		nuevo.Id = "92" + string(nuevo.Letra) + strconv.Itoa(nuevo.Num)
+		if L.Primero == nil {
+			L.Primero = nuevo
+			L.Ultimo = nuevo
+		} else {
+			L.Ultimo.Sig = nuevo
+			L.Ultimo = nuevo
+		}
 	}
 	return Structs.Resp{Res: "LA PARTICION " + name + " YA ESTA MONTADA"}
 }
@@ -63,4 +84,43 @@ func (L *MountList) getLetra(path string) byte {
 		aux = aux.Sig
 	}
 	return letraMayor + 1
+}
+
+func (L *MountList) buscar(id string) *Nodo_M {
+	aux := L.Primero
+	for aux != nil {
+		if aux.Id == id {
+			return aux
+		}
+		aux = aux.Sig
+	}
+	return aux
+}
+
+func (L *MountList) eliminar(id string) Structs.Bandera {
+	if L.Primero != nil {
+		if L.Primero == L.Ultimo && L.Primero.Id == id {
+			L.Primero = nil
+			L.Ultimo = nil
+			return Structs.Bandera{Val: true}
+		} else if L.Primero.Id == id {
+			L.Primero = L.Primero.Sig
+			return Structs.Bandera{Val: true}
+		} else {
+			aux := L.Primero.Sig
+			ant := L.Primero
+			for aux != nil {
+				if aux.Id == id {
+					ant.Sig = aux.Sig
+					aux.Sig = nil
+					return Structs.Bandera{Val: true}
+				}
+				ant = aux
+				aux = aux.Sig
+			}
+			return Structs.Bandera{Val: false, Men: "NO EXISTE LA PARTICION " + id}
+		}
+	} else {
+		return Structs.Bandera{Val: false, Men: "NO HAY PARTICIONES MONTADAS"}
+	}
 }

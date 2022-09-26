@@ -7,6 +7,7 @@ import (
 )
 
 var UsuarioL Structs.Usuario
+var Mlist MountList
 
 func Lector(comando string) Structs.Resp {
 	res := ""
@@ -314,6 +315,87 @@ func Lector(comando string) Structs.Resp {
 				}
 			}
 			return fdisk()
+		} else if strncmp(entradaL, "mount") {
+			i := 5
+			for entradaL[i] == ' ' && len(entradaL) > 0 {
+				i++
+			}
+			entradaL = entradaL[i:]
+			entradaO = entradaO[i:]
+			for len(entradaO) > 0 {
+				if strncmp(entradaL, "-path") {
+					i = find(entradaL, "=") + 1
+					for entradaL[i] == ' ' && len(entradaL) > 0 {
+						i++
+					}
+					entradaL = entradaL[i:]
+					entradaO = entradaO[i:]
+
+					if entradaL[0] == '"' {
+						entradaL = entradaL[1:]
+						entradaO = entradaO[1:]
+
+						i = find(entradaL, "\"")
+						p := entradaO[:i]
+						Pmontar = p
+						i += 1
+						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+							i++
+						}
+						entradaL = entradaL[i:]
+						entradaO = entradaO[i:]
+
+					} else {
+						i = find(entradaL, " ")
+						p := entradaO[:i]
+						Pmontar = p
+						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+							i++
+						}
+						entradaL = entradaL[i:]
+						entradaO = entradaO[i:]
+					}
+
+				} else if strncmp(entradaL, "-name") {
+					i = find(entradaL, "=") + 1
+					for entradaL[i] == ' ' && len(entradaL) > 0 {
+						i++
+					}
+					entradaL = entradaL[i:]
+					entradaO = entradaO[i:]
+
+					if entradaL[0] == '"' {
+						entradaL = entradaL[1:]
+						entradaO = entradaO[1:]
+
+						i = find(entradaL, "\"")
+						n := entradaO[:i]
+						Namemontar = n
+						i += 1
+						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+							i++
+						}
+						entradaL = entradaL[i:]
+						entradaO = entradaO[i:]
+
+					} else {
+						i = find(entradaL, " ")
+						n := entradaO[:i]
+						Namemontar = n
+						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+							i++
+						}
+						entradaL = entradaL[i:]
+						entradaO = entradaO[i:]
+					}
+
+				} else if strncmp(entradaL, "#") {
+					break
+				} else {
+					return Structs.Resp{Res: "ERROR EN EL COMANDO DE ENTRADA: " + entradaO}
+				}
+			}
+			mount()
 		} else {
 			return Structs.Resp{Res: "Comando no reconocido"}
 		}

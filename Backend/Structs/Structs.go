@@ -57,44 +57,44 @@ type EBR struct {
 }
 
 type SuperBloque struct {
-	s_filesystem_type   int32
-	s_inodes_count      int32
-	s_blocks_count      int32
-	s_free_blocks_count int32
-	s_free_inodes_count int32
-	s_mtime             int64
-	s_umtime            int64
-	s_mnt_count         int32
-	s_magic             int32
-	s_inode_s           int32
-	s_block_s           int32
-	s_firts_ino         int32
-	s_first_blo         int32
-	s_bm_inode_start    int32
-	s_bm_block_start    int32
-	s_inode_start       int32
-	s_block_start       int32
+	S_filesystem_type   int32
+	S_inodes_count      int32
+	S_blocks_count      int32
+	S_free_blocks_count int32
+	S_free_inodes_count int32
+	S_mtime             int64
+	S_umtime            int64
+	S_mnt_count         int32
+	S_magic             int32
+	S_inode_s           int32
+	S_block_s           int32
+	S_firts_ino         int32
+	S_first_blo         int32
+	S_bm_inode_start    int32
+	S_bm_block_start    int32
+	S_inode_start       int32
+	S_block_start       int32
 }
 type TablaInodo struct {
-	i_uid   int32
-	i_gid   int32
-	i_s     int32
-	i_atime int64
-	i_ctime int64
-	i_mtime int64
-	i_block [15]int32
-	i_type  byte
-	i_perm  int32
+	I_uid   int32
+	I_gid   int32
+	I_s     int32
+	I_atime int64
+	I_ctime int64
+	I_mtime int64
+	I_block [15]int32
+	I_type  byte
+	I_perm  int32
 }
 
 type Content struct {
-	b_name  [12]byte
-	b_inodo int32
+	B_name  [12]byte
+	B_inodo int32
 }
 
 type BloqueCarpeta struct {
-	b_content [4]Content
+	B_content [4]Content
 }
 type BloqueArchivo struct {
-	b_content [64]byte
+	B_content [64]byte
 }
