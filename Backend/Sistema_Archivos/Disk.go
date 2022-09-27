@@ -93,9 +93,6 @@ func mkdisk() Structs.Resp {
 	err = binary.Write(&bufferControl, binary.BigEndian, mbr)
 	EscribirFile(file, bufferControl.Bytes())
 
-	/*file.Seek(0, 0)
-	var mbrP Structs.MBR
-	err = binary.Read(LeerFile(file, int(unsafe.Sizeof(mbrP))), binary.BigEndian, &mbrP)*/
 	return Structs.Resp{Res: "SE CREO EL DISCO EXITOSAMENTE"}
 }
 
@@ -180,6 +177,12 @@ func GetDirectorio(path string) string {
 	}
 
 	return directorio
+}
+
+func GetExtension(path string) string {
+	i := find(path, ".")
+	aux := path[i+1:]
+	return aux
 }
 
 func EscribirFile(file *os.File, data []byte) {

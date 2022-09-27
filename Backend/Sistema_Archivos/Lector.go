@@ -396,6 +396,150 @@ func Lector(comando string) Structs.Resp {
 				}
 			}
 			return mount()
+		} else if strncmp(entradaL, "rep") {
+			i := 3
+			for entradaL[i] == ' ' && len(entradaL) > 0 {
+				i++
+			}
+			entradaL = entradaL[i:]
+			entradaO = entradaO[i:]
+			for len(entradaO) > 0 {
+				if strncmp(entradaL, "-path") {
+					i = find(entradaL, "=") + 1
+					for entradaL[i] == ' ' && len(entradaL) > 0 {
+						i++
+					}
+					entradaL = entradaL[i:]
+					entradaO = entradaO[i:]
+
+					if entradaL[0] == '"' {
+						entradaL = entradaL[1:]
+						entradaO = entradaO[1:]
+
+						i = find(entradaL, "\"")
+						p := entradaO[:i]
+						Prep = p
+						i += 1
+						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+							i++
+						}
+						entradaL = entradaL[i:]
+						entradaO = entradaO[i:]
+
+					} else {
+						i = find(entradaL, " ")
+						p := entradaO[:i]
+						Prep = p
+						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+							i++
+						}
+						entradaL = entradaL[i:]
+						entradaO = entradaO[i:]
+					}
+
+				} else if strncmp(entradaL, "-name") {
+					i = find(entradaL, "=") + 1
+					for entradaL[i] == ' ' && len(entradaL) > 0 {
+						i++
+					}
+					entradaL = entradaL[i:]
+					entradaO = entradaO[i:]
+
+					if entradaL[0] == '"' {
+						entradaL = entradaL[1:]
+						entradaO = entradaO[1:]
+
+						i = find(entradaL, "\"")
+						n := entradaO[:i]
+						Namerep = n
+						i += 1
+						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+							i++
+						}
+						entradaL = entradaL[i:]
+						entradaO = entradaO[i:]
+
+					} else {
+						i = find(entradaL, " ")
+						n := entradaO[:i]
+						Namerep = n
+						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+							i++
+						}
+						entradaL = entradaL[i:]
+						entradaO = entradaO[i:]
+					}
+				} else if strncmp(entradaL, "-ruta") {
+					i = find(entradaL, "=") + 1
+					for entradaL[i] == ' ' && len(entradaL) > 0 {
+						i++
+					}
+					entradaL = entradaL[i:]
+					entradaO = entradaO[i:]
+
+					if entradaL[0] == '"' {
+						entradaL = entradaL[1:]
+						entradaO = entradaO[1:]
+
+						i = find(entradaL, "\"")
+						p := entradaO[:i]
+						Rutarep = p
+						i += 1
+						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+							i++
+						}
+						entradaL = entradaL[i:]
+						entradaO = entradaO[i:]
+
+					} else {
+						i = find(entradaL, " ")
+						p := entradaO[:i]
+						Rutarep = p
+						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+							i++
+						}
+						entradaL = entradaL[i:]
+						entradaO = entradaO[i:]
+					}
+				} else if strncmp(entradaL, "-id") {
+					i = find(entradaL, "=") + 1
+					for entradaL[i] == ' ' && len(entradaL) > 0 {
+						i++
+					}
+					entradaL = entradaL[i:]
+					entradaO = entradaO[i:]
+
+					if entradaL[0] == '"' {
+						entradaL = entradaL[1:]
+						entradaO = entradaO[1:]
+
+						i = find(entradaL, "\"")
+						p := entradaO[:i]
+						Idrep = p
+						i += 1
+						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+							i++
+						}
+						entradaL = entradaL[i:]
+						entradaO = entradaO[i:]
+
+					} else {
+						i = find(entradaL, " ")
+						p := entradaO[:i]
+						Idrep = p
+						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+							i++
+						}
+						entradaL = entradaL[i:]
+						entradaO = entradaO[i:]
+					}
+				} else if strncmp(entradaL, "#") {
+					break
+				} else {
+					return Structs.Resp{Res: "ERROR EN EL COMANDO DE ENTRADA: " + entradaO}
+				}
+			}
+			return GenerateRep()
 		} else {
 			return Structs.Resp{Res: "Comando no reconocido"}
 		}

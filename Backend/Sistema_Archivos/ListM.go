@@ -35,7 +35,7 @@ func (L *MountList) add(path string, name string, ty byte, start int, pos int) S
 		nuevo.Letra = letra
 		nuevo.Start = start
 		nuevo.Pos = pos
-		nuevo.Id = "92" + string(nuevo.Letra) + strconv.Itoa(nuevo.Num)
+		nuevo.Id = "92" + strconv.Itoa(nuevo.Num) + string(nuevo.Letra)
 		if L.Primero == nil {
 			L.Primero = nuevo
 			L.Ultimo = nuevo
