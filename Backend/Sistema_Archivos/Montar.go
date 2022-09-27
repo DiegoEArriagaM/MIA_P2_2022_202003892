@@ -111,6 +111,32 @@ func mount() Structs.Resp {
 				}
 
 				if pos != -1 {
+					if mbr.Mbr_partition[pos].Part_type == 'e' {
+						file.Close()
+						return Structs.Resp{Res: "NO SE PUEDE MONTAR UNA PARTICION EXTENDIDA "}
+					}
+					sb := Structs.SuperBloque{}
+					if mbr.Mbr_partition[pos].Part_status == '0' || mbr.Mbr_partition[pos].Part_status == '1' {
+						mbr.Mbr_partition[pos].Part_status = '1'
+					}
+
+					file.Seek(0, 0)
+					var bufferMBR bytes.Buffer
+					errf = binary.Write(&bufferMBR, binary.BigEndian, mbr)
+					EscribirFile(file, bufferMBR.Bytes())
+
+					if mbr.Mbr_partition[pos].Part_status == '2' {
+						file.Seek(int64(mbr.Mbr_partition[pos].Part_start), 0)
+						errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(sb))), binary.BigEndian, &sb)
+						sb.S_mtime = time.Now().Unix()
+						sb.S_mnt_count += 1
+						file.Seek(int64(mbr.Mbr_partition[pos].Part_start), 0)
+						var bufferSB bytes.Buffer
+						errf = binary.Write(&bufferSB, binary.BigEndian, sb)
+						EscribirFile(file, bufferSB.Bytes())
+					}
+					file.Close()
+					return Mlist.add(Pmontar, Namemontar, 'l', int(mbr.Mbr_partition[pos].Part_start), -1)
 
 				}
 				file.Close()
