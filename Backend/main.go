@@ -9,6 +9,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 )
 
 func main() {
@@ -16,8 +18,25 @@ func main() {
 	fmt.Println("Inicio")
 	router := mux.NewRouter()
 	enableCORS(router)
+
 	router.HandleFunc("/", func(writer http.ResponseWriter, req *http.Request) {
 		json.NewEncoder(writer).Encode(Structs.Inicio{Res: "Simulador de Disco Duro Web Corriendo"})
+	}).Methods("GET")
+
+	router.HandleFunc("/ListRep", func(writer http.ResponseWriter, req *http.Request) {
+		r := make([]string, 2)
+		reportes, er := os.ReadDir("Reportes/")
+		if er != nil {
+			fmt.Println(er)
+		}
+		for _, reporte := range reportes {
+			i := find(reporte.Name(), ".")
+			if i >= len(reporte.Name()) {
+				r = append(r, reporte.Name())
+			}
+
+		}
+		json.NewEncoder(writer).Encode(r)
 	}).Methods("GET")
 
 	router.HandleFunc("/Entrada", func(writer http.ResponseWriter, req *http.Request) {
@@ -65,4 +84,12 @@ func middlewareCors(next http.Handler) http.Handler {
 			// and call next handler!
 			next.ServeHTTP(w, req)
 		})
+}
+
+func find(cadena string, substring string) int {
+	i := strings.Index(cadena, substring)
+	if i == -1 {
+		i = len(cadena)
+	}
+	return i
 }

@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ServicioService } from '../Coneccion/servicio.service';
+import {Router} from '@angular/router';
 //import {graphviz} from 'd3-graphviz';
 
 @Component({
@@ -26,11 +27,10 @@ export class MainComponent implements OnInit {
   terminal:any
   resp:any=""
   t:any=1
+  list:any
   
 
-  
-
-  constructor(private servicios:ServicioService) {
+  constructor(private route:Router,private servicios:ServicioService) {
     if(sessionStorage['idU']==undefined){
       this.entrada.idU=0
       this.entrada.idG=0
@@ -124,14 +124,16 @@ export class MainComponent implements OnInit {
     }
   }
 
-  exec(comando:any){
+  async exec(comando:any){
     const r=this.t
     this.terminal+=this.t+")"+comando+"\n"
     this.t=this.t+1
-    console.log(comando)
     this.entrada.comando=comando
     this.entrada.comando=this.limpiar(this.entrada.comando)
     const command=this.getComand();
+    if (command=="pause"){
+      await new Promise(f => setTimeout(f, 10000));
+    }
     let datos:any
     this.servicios.Entrada(this.entrada).subscribe(
       data=>{
@@ -169,4 +171,21 @@ export class MainComponent implements OnInit {
     return comand
   }
 
+  getRep(){
+    this.servicios.ListR().subscribe(
+      data=>{
+        this.list=data
+        console.log(this.list)
+      },
+      err=>{
+        console.log(err)
+      }
+    )
+    console.log(this.list)
+  }
+
+  verRep(name:any){
+    const dir="http://localhost:8000/Reportes/"+name
+        window.open(dir)
+  }
 }

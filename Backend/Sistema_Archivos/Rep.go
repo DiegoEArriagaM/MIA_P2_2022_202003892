@@ -181,19 +181,7 @@ func disk() Structs.Resp {
 			if errD != nil {
 				fmt.Printf("%s", errD)
 			}
-			/*reportes, er := os.ReadDir("Reportes/")
-			if er != nil {
-				fmt.Println(er)
-			}
-			for _, reporte := range reportes {
-				r := find(reporte.Name(), ".")
-				if r < len(reporte.Name()) {
 
-				} else {
-					fmt.Println(reporte.Name())
-				}
-
-			}*/
 			return Structs.Resp{Res: "SE GENERO EL REPORTE DISK"}
 		}
 		return Structs.Resp{Res: "DISCO INEXISTENTE"}

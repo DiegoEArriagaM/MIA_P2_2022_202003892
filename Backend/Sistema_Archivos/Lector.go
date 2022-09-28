@@ -542,7 +542,7 @@ func Lector(comando string) Structs.Resp {
 			}
 			return GenerateRep()
 		} else {
-			return Structs.Resp{Res: "Comando no reconocido"}
+			return Structs.Resp{Res: "COMANDO NO RECONOCIDO"}
 		}
 	}
 
