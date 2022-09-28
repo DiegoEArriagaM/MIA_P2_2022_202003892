@@ -18,6 +18,14 @@ var Dirrep = " "
 var Extrep = " "
 
 func GenerateRep() Structs.Resp {
+	defer func() {
+		Prep = " "
+		Namerep = " "
+		Idrep = " "
+		Rutarep = " "
+		Dirrep = " "
+		Extrep = " "
+	}()
 	if Prep != " " {
 		if Idrep != " " {
 			if Namerep == "disk" {
@@ -53,7 +61,7 @@ func disk() Structs.Resp {
 			errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(mbr))), binary.BigEndian, &mbr)
 			tamanioT := int(mbr.Mbr_tamanio)
 			dotS := ""
-			dot, errD := os.OpenFile("Reportes/disk.dot", os.O_CREATE, 0777)
+			dot, errD := os.OpenFile("Reportes/"+nombreD+".dot", os.O_CREATE, 0777)
 			dot.Close()
 			if errD != nil {
 				fmt.Println(errD)
@@ -69,30 +77,123 @@ func disk() Structs.Resp {
 			for i < 4 {
 				if mbr.Mbr_partition[i].Part_start != -1 {
 					if mbr.Mbr_partition[i].Part_type == 'p' {
-						var p1 = float32(mbr.Mbr_partition[i].Part_s) / float32(tamanioT)
+						porcentaje := (float64(mbr.Mbr_partition[i].Part_s) / float64(tamanioT)) * 100
+						trunc := float64(int(porcentaje*100)) / 100
+						name1 := getPartName(mbr.Mbr_partition[i].Part_name)
+						dotS += "<td rowspan=\"2\">" + name1 + " <br/>" + fmt.Sprintf("%v", trunc) + "</td>"
+						if i != 3 {
+							if (mbr.Mbr_partition[i].Part_start + mbr.Mbr_partition[i].Part_s) < mbr.Mbr_partition[i+1].Part_start {
+								porcentaje = (float64(mbr.Mbr_partition[i+1].Part_start-(mbr.Mbr_partition[i].Part_start+mbr.Mbr_partition[i].Part_s)) / float64(tamanioT)) * 100
+								trunc = float64(int(porcentaje*100)) / 100
+								dotS += "<td rowspan=\"2\">LIBRE <br/>" + fmt.Sprintf("%v", trunc) + "</td>"
+							}
+						} else if int(mbr.Mbr_partition[i].Part_start+mbr.Mbr_partition[i].Part_s) < tamanioT {
+							porcentaje = (float64(tamanioT-int(mbr.Mbr_partition[i].Part_start+mbr.Mbr_partition[i].Part_s)) / float64(tamanioT)) * 100
+							trunc = float64(int(porcentaje*100)) / 100
+							dotS += "<td rowspan=\"2\">LIBRE <br/>" + fmt.Sprintf("%v", trunc) + "</td>"
+						}
+					} else if mbr.Mbr_partition[i].Part_type == 'e' {
+						porcentaje := (float64(mbr.Mbr_partition[i].Part_s) / float64(tamanioT)) * 100
+						dotS += "<td rowspan=\"2\">EXTENDIDA</td>"
+						ebr := Structs.EBR{}
+						file.Seek(int64(mbr.Mbr_partition[i].Part_start), 0)
+						errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(ebr))), binary.BigEndian, &ebr)
+						if !(ebr.Part_s == -1 && ebr.Part_next == -1) {
+							if ebr.Part_s > -1 {
+								name1 := getPartName(ebr.Part_name)
+								dotS += "<td rowspan=\"2\">EBR <br/>" + name1 + "</td>"
+								porcentaje = (float64(ebr.Part_s) / float64(tamanioT)) * 100.0
+								trunc := float64(int(porcentaje*100)) / 100
+								dotS += "<td rowspan=\"2\">Logica <br/>" + fmt.Sprintf("%v", trunc) + "</td>"
+							} else {
+								dotS += "<td rowspan=\"2\">EBR</td>"
+								porcentaje = ((float64(ebr.Part_next - ebr.Part_start)) / float64(tamanioT)) * 100.0
+								trunc := float64(int(porcentaje*100)) / 100
+								dotS += "<td rowspan=\"2\">Libre <br/>" + fmt.Sprintf("%v", trunc) + "</td>"
+							}
+							if ebr.Part_next != -1 {
+								file.Seek(int64(ebr.Part_next), 0)
+								errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(ebr))), binary.BigEndian, &ebr)
+								for true {
+									name1 := getPartName(ebr.Part_name)
+									dotS += "<td rowspan=\"2\">EBR <br/>" + name1 + "</td>"
+									porcentaje = (float64(ebr.Part_s) / float64(tamanioT)) * 100.0
+									trunc := float64(int(porcentaje*100)) / 100
+									dotS += "<td rowspan=\"2\">Logica <br/>" + fmt.Sprintf("%v", trunc) + "</td>"
 
+									if ebr.Part_next == -1 {
+										if (ebr.Part_start + ebr.Part_s) < mbr.Mbr_partition[i].Part_s {
+											porcentaje = (float64(mbr.Mbr_partition[i].Part_s-(ebr.Part_start+ebr.Part_s)) / float64(tamanioT)) * 100
+											trunc = float64(int(porcentaje*100)) / 100
+											dotS += "<td rowspan=\"2\">Libre <br/>" + fmt.Sprintf("%v", trunc) + "</td>"
+										}
+										break
+									}
+									if (ebr.Part_start + ebr.Part_s) < ebr.Part_next {
+										porcentaje = (float64(ebr.Part_next-(ebr.Part_start+ebr.Part_s)) / float64(tamanioT)) * 100
+										trunc = float64(int(porcentaje*100)) / 100
+										dotS += "<td rowspan=\"2\">Libre <br/>" + fmt.Sprintf("%v", trunc) + "</td>"
+									}
+									file.Seek(int64(ebr.Part_next), 0)
+									errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(ebr))), binary.BigEndian, &ebr)
+								}
+							}
+						}
+						dotS += "<td rowspan=\"2\">EXTENDIDA</td>"
 					}
+					inicio = int(mbr.Mbr_partition[i].Part_start + mbr.Mbr_partition[i].Part_s)
 				} else {
-
+					i++
+					for i < 4 {
+						if mbr.Mbr_partition[i].Part_start != -1 {
+							porcentaje := (float64(int(mbr.Mbr_partition[i].Part_start)-inicio) / float64(tamanioT)) * 100
+							trunc := float64(int(porcentaje*100)) / 100
+							dotS += "<td rowspan=\"2\">Libre <br/>" + fmt.Sprintf("%v", trunc) + "</td>"
+							break
+						}
+						i++
+					}
+					if i == 4 {
+						porcentaje := float64(tamanioT-inicio) / float64(tamanioT) * 100
+						trunc := float64(int(porcentaje*100)) / 100
+						dotS += "<td rowspan=\"2\">Libre <br/>" + fmt.Sprintf("%v", trunc) + "</td>"
+						goto t0
+					}
+					i--
 				}
 				i++
 			}
+		t0:
 			dotS += "</tr></table>>];\n"
 			dotS += "}"
-			errD = os.WriteFile("Reportes/disk.dot", []byte(dotS), 0777)
+			errD = os.WriteFile("Reportes/"+nombreD+".dot", []byte(dotS), 0777)
 			if errD != nil {
 				fmt.Println(errD)
 			}
 
 			file.Close()
-			_, errD = exec.Command("dot", "-T"+Extrep, "Reportes/disk.dot", "-o", "Reportes/"+nombreD).Output()
+			ext := Extrep
+			_, errD = exec.Command("dot", "-T"+Extrep, "Reportes/"+nombreD+".dot", "-o", "Reportes/"+nombreD).Output()
 			if errD != nil {
 				fmt.Printf("%s", errD)
 			}
-			_, errD = exec.Command("dot", "-T"+Extrep, "Reportes/disk.dot", "-o", Dirrep+nombreD).Output()
+			_, errD = exec.Command("dot", "-T"+ext, "Reportes/"+nombreD+".dot", "-o", Dirrep+nombreD).Output()
 			if errD != nil {
 				fmt.Printf("%s", errD)
 			}
+			/*reportes, er := os.ReadDir("Reportes/")
+			if er != nil {
+				fmt.Println(er)
+			}
+			for _, reporte := range reportes {
+				r := find(reporte.Name(), ".")
+				if r < len(reporte.Name()) {
+
+				} else {
+					fmt.Println(reporte.Name())
+				}
+
+			}*/
 			return Structs.Resp{Res: "SE GENERO EL REPORTE DISK"}
 		}
 		return Structs.Resp{Res: "DISCO INEXISTENTE"}
@@ -137,4 +238,15 @@ func nombre(path string) string {
 	i := find(aux, ".")
 
 	return aux[:i]
+}
+
+func getPartName(partName [16]byte) string {
+	name := ""
+	for i := 0; i < 16; i++ {
+		if partName[i] == '\000' {
+			break
+		}
+		name += string(partName[i])
+	}
+	return name
 }

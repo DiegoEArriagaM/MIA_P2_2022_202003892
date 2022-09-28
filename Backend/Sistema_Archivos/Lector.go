@@ -10,6 +10,7 @@ var UsuarioL Structs.Usuario
 var Mlist MountList
 
 func Lector(comando string) Structs.Resp {
+
 	res := ""
 	entradaO := comando
 	entradaL := strings.ToLower(comando)

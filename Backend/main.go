@@ -12,6 +12,7 @@ import (
 )
 
 func main() {
+
 	fmt.Println("Inicio")
 	router := mux.NewRouter()
 	enableCORS(router)
@@ -37,6 +38,7 @@ func main() {
 			NombreU: entrada.NombreU,
 		}
 		r := Sistema_Archivos.Lector(entrada.Command)
+
 		json.NewEncoder(writer).Encode(r)
 	}).Methods("GET", "POST")
 
