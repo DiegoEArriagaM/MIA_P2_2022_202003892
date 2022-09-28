@@ -10,14 +10,12 @@ var UsuarioL Structs.Usuario
 var Mlist MountList
 
 func Lector(comando string) Structs.Resp {
-
-	res := ""
 	entradaO := comando
 	entradaL := strings.ToLower(comando)
 
 	if len(entradaO) > 0 {
 		if strncmp(entradaL, "#") {
-			return Structs.Resp{Res: res}
+			return Structs.Resp{Res: ""}
 		} else if strncmp(entradaL, "mkdisk") {
 			i := 6
 			for entradaL[i] == ' ' && len(entradaL) > 0 {
@@ -546,7 +544,7 @@ func Lector(comando string) Structs.Resp {
 		}
 	}
 
-	return Structs.Resp{Res: res}
+	return Structs.Resp{Res: ""}
 }
 
 func strncmp(entrada string, comparacion string) bool {

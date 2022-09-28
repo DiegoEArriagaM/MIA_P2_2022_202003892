@@ -24,6 +24,16 @@ export class MainComponent implements OnInit {
 
   }
 
+  execE:any={
+    comandos:null,
+    idU: 0,
+	  idG:0,
+	  idMoun:" ",
+	  nombreU:" ",
+    login:false,
+    i:0
+  }
+
   terminal:any
   resp:any=""
   t:any=1
@@ -37,12 +47,22 @@ export class MainComponent implements OnInit {
       this.entrada.idMoun=" "
       this.entrada.nombreU=" "
       this.entrada.login=false
+      this.execE.idU=0
+      this.execE.idG=0
+      this.execE.idMoun=" "
+      this.execE.nombreU=" "
+      this.execE.login=false
     }else{
       this.entrada.idU=sessionStorage['idU']
       this.entrada.idG=sessionStorage['idG']
       this.entrada.idMoun=sessionStorage['idMoun']
       this.entrada.nombreU=sessionStorage['nombreU']
       this.entrada.login=sessionStorage['login']
+      this.execE.idU=sessionStorage['idU']
+      this.execE.idG=sessionStorage['idG']
+      this.execE.idMoun=sessionStorage['idMoun']
+      this.execE.nombreU=sessionStorage['nombreU']
+      this.execE.login=sessionStorage['login']
     }
     this.terminal=""
     this.inicio=""
@@ -50,6 +70,7 @@ export class MainComponent implements OnInit {
       data=>{
         let datos:any=data;
         this.inicio=datos
+        this.actualizarU(datos.usuario)
       },
       err=>{
         this.inicio={
@@ -67,6 +88,24 @@ export class MainComponent implements OnInit {
     //graphviz("#graph").renderDot('digraph {a -> b}');
   }
 
+  actualizarU(datos:any){
+    this.entrada.idU=datos['id_u']
+    this.entrada.idG=datos['id_g']
+    this.entrada.idMoun=datos['id_mount']
+    this.entrada.nombreU=datos['nombre_u']
+    this.entrada.login=datos['login']
+    this.execE.idU=datos['id_u']
+    this.execE.idG=datos['id_g']
+    this.execE.idMoun=datos['id_mount']
+    this.execE.nombreU=datos['nombre_u']
+    this.execE.login=datos['login']
+    sessionStorage['idU']=datos['id_u']
+    sessionStorage['idG']=datos['id_g']
+    sessionStorage['idMoun']=datos['id_mount']
+    sessionStorage['nombreU']=datos['nombre_u']
+    sessionStorage['login']=datos['login']
+  }
+
   mandarComando(){
     const r=this.t
     this.entrada.comando=this.limpiar(this.entrada.comando)
@@ -74,6 +113,7 @@ export class MainComponent implements OnInit {
     this.servicios.Entrada(this.entrada).subscribe(
       data=>{
         let datos:any=data
+        this.actualizarU(datos.usuario)
         this.terminal+=this.t+")"+this.entrada.comando+"\n"
         if(datos.res!=""){
           this.resp+=r+")"+datos.res+"\n"
@@ -81,8 +121,6 @@ export class MainComponent implements OnInit {
         this.entrada.comando=""
         this.t=this.t+1
         this.entrada.comando=""
-        /*const dir="http://localhost:8000/Reportes/"+"ejemplo.pdf"
-        window.open(dir)*/
       },
       err=>{
         console.log(err)
@@ -100,6 +138,7 @@ export class MainComponent implements OnInit {
   }
 
   ejecutar(){
+    const r=this.t
     //Se informa que archivo se guardo
     const name:string[]=this.doc[0].name.split(".")
     if (name.length>1){
@@ -112,9 +151,24 @@ export class MainComponent implements OnInit {
           const lines: string[] = content.split('\n');
           let j=0
           while(j<lines.length){
-            this.exec(lines[j])
+            this.terminal+=this.t+")"+lines[j]+"\n"
+            lines[j]=this.limpiar(lines[j])
+            this.t++
             j=j+1
           }
+          this.execE.comandos=lines
+          this.execE.i=r
+          let datos:any
+          this.servicios.Exec(this.execE).subscribe(
+            data=>{
+              datos=data
+              this.resp+=datos.res
+            },
+            err=>{
+              console.log(err)
+            }
+          )
+          
         }
       }else{
         alert("NO SE SELECCIONO UN ARCHIVO .script")
@@ -122,31 +176,6 @@ export class MainComponent implements OnInit {
     }else{
       alert("NO SE SELECCIONO UN ARCHIVO .script")
     }
-  }
-
-  async exec(comando:any){
-    const r=this.t
-    this.terminal+=this.t+")"+comando+"\n"
-    this.t=this.t+1
-    this.entrada.comando=comando
-    this.entrada.comando=this.limpiar(this.entrada.comando)
-    const command=this.getComand();
-    if (command=="pause"){
-      await new Promise(f => setTimeout(f, 10000));
-    }
-    let datos:any
-    this.servicios.Entrada(this.entrada).subscribe(
-      data=>{
-        datos=data
-        if(datos.res!=""){
-          this.resp+=r+")"+datos.res+"\n"
-        }
-        this.entrada.comando=""
-      },
-      err=>{
-        console.log(err)
-      }
-    )
   }
 
   limpiar(comando:any):string{

@@ -69,8 +69,8 @@ func disk() Structs.Resp {
 
 			dotS += "digraph G {\n"
 			dotS += "node[shape=none]\n"
-			dotS += "start[label=<<table><tr>"
-			dotS += "<td rowspan=\"2\">MBR</td>"
+			dotS += "start[label=<<table><tr>\n"
+			dotS += "<td rowspan=\"2\">MBR</td>\n"
 
 			i := 0
 			inicio := int(unsafe.Sizeof(Structs.MBR{}))
@@ -80,66 +80,66 @@ func disk() Structs.Resp {
 						porcentaje := (float64(mbr.Mbr_partition[i].Part_s) / float64(tamanioT)) * 100
 						trunc := float64(int(porcentaje*100)) / 100
 						name1 := getPartName(mbr.Mbr_partition[i].Part_name)
-						dotS += "<td rowspan=\"2\">" + name1 + " <br/>" + fmt.Sprintf("%v", trunc) + "</td>"
+						dotS += "<td rowspan=\"2\">" + name1 + " <br/>" + fmt.Sprintf("%v", trunc) + "</td>\n"
 						if i != 3 {
 							if (mbr.Mbr_partition[i].Part_start + mbr.Mbr_partition[i].Part_s) < mbr.Mbr_partition[i+1].Part_start {
 								porcentaje = (float64(mbr.Mbr_partition[i+1].Part_start-(mbr.Mbr_partition[i].Part_start+mbr.Mbr_partition[i].Part_s)) / float64(tamanioT)) * 100
 								trunc = float64(int(porcentaje*100)) / 100
-								dotS += "<td rowspan=\"2\">LIBRE <br/>" + fmt.Sprintf("%v", trunc) + "</td>"
+								dotS += "<td rowspan=\"2\">LIBRE <br/>" + fmt.Sprintf("%v", trunc) + "</td>\n"
 							}
 						} else if int(mbr.Mbr_partition[i].Part_start+mbr.Mbr_partition[i].Part_s) < tamanioT {
 							porcentaje = (float64(tamanioT-int(mbr.Mbr_partition[i].Part_start+mbr.Mbr_partition[i].Part_s)) / float64(tamanioT)) * 100
 							trunc = float64(int(porcentaje*100)) / 100
-							dotS += "<td rowspan=\"2\">LIBRE <br/>" + fmt.Sprintf("%v", trunc) + "</td>"
+							dotS += "<td rowspan=\"2\">LIBRE <br/>" + fmt.Sprintf("%v", trunc) + "</td>\n"
 						}
 					} else if mbr.Mbr_partition[i].Part_type == 'e' {
 						porcentaje := (float64(mbr.Mbr_partition[i].Part_s) / float64(tamanioT)) * 100
-						dotS += "<td rowspan=\"2\">EXTENDIDA</td>"
+						dotS += "<td rowspan=\"2\">EXTENDIDA</td>\n"
 						ebr := Structs.EBR{}
 						file.Seek(int64(mbr.Mbr_partition[i].Part_start), 0)
 						errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(ebr))), binary.BigEndian, &ebr)
 						if !(ebr.Part_s == -1 && ebr.Part_next == -1) {
 							if ebr.Part_s > -1 {
 								name1 := getPartName(ebr.Part_name)
-								dotS += "<td rowspan=\"2\">EBR <br/>" + name1 + "</td>"
+								dotS += "<td rowspan=\"2\">EBR <br/>" + name1 + "</td>\n"
 								porcentaje = (float64(ebr.Part_s) / float64(tamanioT)) * 100.0
 								trunc := float64(int(porcentaje*100)) / 100
-								dotS += "<td rowspan=\"2\">Logica <br/>" + fmt.Sprintf("%v", trunc) + "</td>"
+								dotS += "<td rowspan=\"2\">Logica <br/>" + fmt.Sprintf("%v", trunc) + "</td>\n"
 							} else {
-								dotS += "<td rowspan=\"2\">EBR</td>"
+								dotS += "<td rowspan=\"2\">EBR</td>\n"
 								porcentaje = ((float64(ebr.Part_next - ebr.Part_start)) / float64(tamanioT)) * 100.0
 								trunc := float64(int(porcentaje*100)) / 100
-								dotS += "<td rowspan=\"2\">Libre <br/>" + fmt.Sprintf("%v", trunc) + "</td>"
+								dotS += "<td rowspan=\"2\">Libre <br/>" + fmt.Sprintf("%v", trunc) + "</td>\n"
 							}
 							if ebr.Part_next != -1 {
 								file.Seek(int64(ebr.Part_next), 0)
 								errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(ebr))), binary.BigEndian, &ebr)
 								for true {
 									name1 := getPartName(ebr.Part_name)
-									dotS += "<td rowspan=\"2\">EBR <br/>" + name1 + "</td>"
+									dotS += "<td rowspan=\"2\">EBR <br/>" + name1 + "</td>\n"
 									porcentaje = (float64(ebr.Part_s) / float64(tamanioT)) * 100.0
 									trunc := float64(int(porcentaje*100)) / 100
-									dotS += "<td rowspan=\"2\">Logica <br/>" + fmt.Sprintf("%v", trunc) + "</td>"
+									dotS += "<td rowspan=\"2\">Logica <br/>" + fmt.Sprintf("%v", trunc) + "</td>\n"
 
 									if ebr.Part_next == -1 {
 										if (ebr.Part_start + ebr.Part_s) < mbr.Mbr_partition[i].Part_s {
 											porcentaje = (float64(mbr.Mbr_partition[i].Part_s-(ebr.Part_start+ebr.Part_s)) / float64(tamanioT)) * 100
 											trunc = float64(int(porcentaje*100)) / 100
-											dotS += "<td rowspan=\"2\">Libre <br/>" + fmt.Sprintf("%v", trunc) + "</td>"
+											dotS += "<td rowspan=\"2\">Libre <br/>" + fmt.Sprintf("%v", trunc) + "</td>\n"
 										}
 										break
 									}
 									if (ebr.Part_start + ebr.Part_s) < ebr.Part_next {
 										porcentaje = (float64(ebr.Part_next-(ebr.Part_start+ebr.Part_s)) / float64(tamanioT)) * 100
 										trunc = float64(int(porcentaje*100)) / 100
-										dotS += "<td rowspan=\"2\">Libre <br/>" + fmt.Sprintf("%v", trunc) + "</td>"
+										dotS += "<td rowspan=\"2\">Libre <br/>" + fmt.Sprintf("%v", trunc) + "</td>\n"
 									}
 									file.Seek(int64(ebr.Part_next), 0)
 									errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(ebr))), binary.BigEndian, &ebr)
 								}
 							}
 						}
-						dotS += "<td rowspan=\"2\">EXTENDIDA</td>"
+						dotS += "<td rowspan=\"2\">EXTENDIDA</td>\n"
 					}
 					inicio = int(mbr.Mbr_partition[i].Part_start + mbr.Mbr_partition[i].Part_s)
 				} else {
@@ -148,7 +148,7 @@ func disk() Structs.Resp {
 						if mbr.Mbr_partition[i].Part_start != -1 {
 							porcentaje := (float64(int(mbr.Mbr_partition[i].Part_start)-inicio) / float64(tamanioT)) * 100
 							trunc := float64(int(porcentaje*100)) / 100
-							dotS += "<td rowspan=\"2\">Libre <br/>" + fmt.Sprintf("%v", trunc) + "</td>"
+							dotS += "<td rowspan=\"2\">Libre <br/>" + fmt.Sprintf("%v", trunc) + "</td>\n"
 							break
 						}
 						i++
@@ -156,7 +156,7 @@ func disk() Structs.Resp {
 					if i == 4 {
 						porcentaje := float64(tamanioT-inicio) / float64(tamanioT) * 100
 						trunc := float64(int(porcentaje*100)) / 100
-						dotS += "<td rowspan=\"2\">Libre <br/>" + fmt.Sprintf("%v", trunc) + "</td>"
+						dotS += "<td rowspan=\"2\">Libre <br/>" + fmt.Sprintf("%v", trunc) + "</td>\n"
 						goto t0
 					}
 					i--

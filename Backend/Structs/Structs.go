@@ -2,7 +2,8 @@ package Structs
 
 // Structs de administrador
 type Resp struct {
-	Res string `json:"res"`
+	Res string  `json:"res"`
+	U   Usuario `json:"usuario"`
 }
 
 type Bandera struct {
@@ -11,7 +12,8 @@ type Bandera struct {
 }
 
 type Inicio struct {
-	Res string `json:"res"`
+	Res string  `json:"res"`
+	U   Usuario `json:"usuario"`
 }
 
 type Entrada struct {
@@ -20,13 +22,25 @@ type Entrada struct {
 	IdG     int32  `json:"idG"`
 	IdMount string `json:"idMoun"`
 	NombreU string `json:"nombreU"`
+	Login   bool   `json:"login"`
+}
+
+type Exec struct {
+	Commands []string `json:"comandos"`
+	IdU      int32    `json:"idU"`
+	IdG      int32    `json:"idG"`
+	IdMount  string   `json:"idMoun"`
+	NombreU  string   `json:"nombreU"`
+	Login    bool     `json:"login"`
+	I        int      `json:"i"`
 }
 
 type Usuario struct {
-	IdU     int32
-	IdG     int32
-	IdMount string
-	NombreU string
+	IdU     int32  `json:"id_u"`
+	IdG     int32  `json:"id_g"`
+	IdMount string `json:"id_mount"`
+	NombreU string `json:"nombre_u"`
+	Login   bool   `json:"login"`
 }
 
 // Structs del Sistema de Archivos

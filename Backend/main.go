@@ -3,6 +3,7 @@ package main
 import (
 	"Backend/Sistema_Archivos"
 	"Backend/Structs"
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
@@ -10,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -20,7 +22,12 @@ func main() {
 	enableCORS(router)
 
 	router.HandleFunc("/", func(writer http.ResponseWriter, req *http.Request) {
-		json.NewEncoder(writer).Encode(Structs.Inicio{Res: "Simulador de Disco Duro Web Corriendo"})
+		Sistema_Archivos.UsuarioL.IdMount = "dasdsa"
+		res := Structs.Inicio{
+			Res: "Simulador de Disco Duro Web Corriendo",
+			U:   Sistema_Archivos.UsuarioL,
+		}
+		json.NewEncoder(writer).Encode(res)
 	}).Methods("GET")
 
 	router.HandleFunc("/ListRep", func(writer http.ResponseWriter, req *http.Request) {
@@ -44,6 +51,7 @@ func main() {
 		var entrada Structs.Entrada
 		if err := json.Unmarshal(body, &entrada); err != nil { // Parse []byte to the go struct pointer
 			fmt.Println("Error al recibir el comando")
+			fmt.Println(err)
 		}
 		reco := recover()
 		if reco != nil {
@@ -55,8 +63,51 @@ func main() {
 			IdG:     entrada.IdG,
 			IdMount: entrada.IdMount,
 			NombreU: entrada.NombreU,
+			Login:   entrada.Login,
 		}
 		r := Sistema_Archivos.Lector(entrada.Command)
+		r.U = Sistema_Archivos.UsuarioL
+
+		json.NewEncoder(writer).Encode(r)
+	}).Methods("GET", "POST")
+
+	router.HandleFunc("/Exec", func(writer http.ResponseWriter, req *http.Request) {
+		body, _ := ioutil.ReadAll(req.Body) // response body is []byte
+		var entrada Structs.Exec
+		if err := json.Unmarshal(body, &entrada); err != nil { // Parse []byte to the go struct pointer
+			fmt.Println("Error al recibir el comando")
+			fmt.Println(err)
+		}
+		reco := recover()
+		if reco != nil {
+			json.NewEncoder(writer).Encode(Structs.Inicio{Res: "Error en la entrada"})
+		}
+
+		Sistema_Archivos.UsuarioL = Structs.Usuario{
+			IdU:     entrada.IdU,
+			IdG:     entrada.IdG,
+			IdMount: entrada.IdMount,
+			NombreU: entrada.NombreU,
+			Login:   entrada.Login,
+		}
+		respuesta := ""
+		for _, s := range entrada.Commands {
+			fmt.Println(s)
+			if s == "pause" {
+				fmt.Println("Presione Enter para continuar")
+				bufio.NewReader(os.Stdin).ReadBytes('\n')
+				fmt.Println()
+				entrada.I++
+				continue
+			}
+			eje := Sistema_Archivos.Lector(s)
+			if eje.Res != "" {
+				respuesta += strconv.Itoa(entrada.I) + ")" + eje.Res + "\n"
+			}
+			entrada.I++
+		}
+		r := Structs.Resp{Res: respuesta}
+		r.U = Sistema_Archivos.UsuarioL
 
 		json.NewEncoder(writer).Encode(r)
 	}).Methods("GET", "POST")

@@ -22,4 +22,8 @@ export class ServicioService {
   Entrada(datos:any){
     return this.http.post(`http://localhost:8000/Entrada`,datos,{headers:this.headers});
   }
+
+  Exec(datos:any){
+    return this.http.post(`http://localhost:8000/Exec`,datos,{headers:this.headers});
+  }
 }

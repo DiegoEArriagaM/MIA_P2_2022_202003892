@@ -43,9 +43,9 @@ func (L *MountList) add(path string, name string, ty byte, start int, pos int) S
 			L.Ultimo.Sig = nuevo
 			L.Ultimo = nuevo
 		}
-		return Structs.Resp{Res: "SE MONTO LA PARTICION CON ID " + L.Ultimo.Id}
+		return Structs.Resp{Res: "SE MONTO LA PARTICION CON ID " + L.Ultimo.Id, U: UsuarioL}
 	}
-	return Structs.Resp{Res: "LA PARTICION " + name + " YA ESTA MONTADA"}
+	return Structs.Resp{Res: "LA PARTICION " + name + " YA ESTA MONTADA", U: UsuarioL}
 }
 
 func (L *MountList) existMount(path string, name string) bool {

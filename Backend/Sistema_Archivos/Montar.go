@@ -113,7 +113,7 @@ func mount() Structs.Resp {
 				if pos != -1 {
 					if mbr.Mbr_partition[pos].Part_type == 'e' {
 						file.Close()
-						return Structs.Resp{Res: "NO SE PUEDE MONTAR UNA PARTICION EXTENDIDA "}
+						return Structs.Resp{Res: "NO SE PUEDE MONTAR UNA PARTICION EXTENDIDA ", U: UsuarioL}
 					}
 					sb := Structs.SuperBloque{}
 					if mbr.Mbr_partition[pos].Part_status == '0' || mbr.Mbr_partition[pos].Part_status == '1' {
@@ -140,11 +140,11 @@ func mount() Structs.Resp {
 
 				}
 				file.Close()
-				return Structs.Resp{Res: "NO EXISTE ESA PARTICION"}
+				return Structs.Resp{Res: "NO EXISTE ESA PARTICION", U: UsuarioL}
 			}
-			return Structs.Resp{Res: "DISCO INEXISTENTE"}
+			return Structs.Resp{Res: "DISCO INEXISTENTE", U: UsuarioL}
 		}
-		return Structs.Resp{Res: "ASEGURESE DE ESCRIBIR EL NOMBRE DE LA PARTICION"}
+		return Structs.Resp{Res: "ASEGURESE DE ESCRIBIR EL NOMBRE DE LA PARTICION", U: UsuarioL}
 	}
-	return Structs.Resp{Res: "ASEGURESE DE ESCRIBIR UN RUTA"}
+	return Structs.Resp{Res: "ASEGURESE DE ESCRIBIR UN RUTA", U: UsuarioL}
 }
