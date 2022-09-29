@@ -89,6 +89,7 @@ type SuperBloque struct {
 	S_inode_start       int32
 	S_block_start       int32
 }
+
 type TablaInodo struct {
 	I_uid   int32
 	I_gid   int32

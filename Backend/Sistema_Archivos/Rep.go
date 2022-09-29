@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
+	"time"
 	"unsafe"
 )
 
@@ -198,15 +200,171 @@ func tree() Structs.Resp {
 	return Structs.Resp{Res: "NO SE HA ENCONTRADO ALGUNA MONTURA CON EL ID: " + Idrep}
 }
 
-func fileR() Structs.Resp {
+func sbR() Structs.Resp {
 	nodo := Mlist.buscar(Idrep)
 	if nodo != nil {
+		Dirrep = GetDirectorio(Prep)
+		Extrep = GetExtension(Prep)
+		nombreD := nombre(Prep)
+		err := os.MkdirAll(Dirrep, 0777)
+		if err != nil {
+			fmt.Printf("%s", err)
+		}
+		file, errf := os.OpenFile(nodo.Path, os.O_RDWR, 0777)
+		if errf == nil {
+			sb := Structs.SuperBloque{}
+			if nodo.Type == 'p' {
+				mbr := Structs.MBR{}
+				file.Seek(0, 0)
+				errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(mbr))), binary.BigEndian, &mbr)
+				if mbr.Mbr_partition[nodo.Pos].Part_status != '2' {
+					file.Close()
+					return Structs.Resp{Res: "NO SE HA FORMATEADO LA MONTURA DE LA PARTICION " + nodo.Name}
+				}
+				file.Seek(int64(nodo.Start), 0)
+			} else if nodo.Type == 'l' {
+				ebr := Structs.EBR{}
+				file.Seek(int64(nodo.Start), 0)
+				errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(ebr))), binary.BigEndian, &ebr)
+				if ebr.Part_status != '2' {
+					file.Close()
+					return Structs.Resp{Res: "NO SE HA FORMATEADO LA MONTURA DE LA PARTICION " + nodo.Name}
+				}
+				file.Seek(int64(nodo.Start+int(unsafe.Sizeof(Structs.EBR{}))), 0)
+			}
+			errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(sb))), binary.BigEndian, &sb)
+			file.Close()
 
+			dot, errD := os.OpenFile("Reportes/"+nombreD+".dot", os.O_CREATE, 0777)
+			dot.Close()
+			if errD != nil {
+				fmt.Println(errD)
+			}
+
+			dotS := ""
+			dotS += "digraph G {\n"
+			dotS += "node[shape=none]\n"
+			dotS += "start[label=<<table>\n"
+			dotS += "<tr><td colspan=\"2\" bgcolor=\"#147e0d\"><font color=\"white\">REPORTE DE SUPERBLOQUE</font></td></tr>\n"
+
+			dotS += "<tr>\n"
+			dotS += "<td bgcolor=\"#b4f0b1\">sb_nombre_hd</td>\n"
+			dotS += "<td bgcolor=\"#b4f0b1\">" + nombreD + "</td>\n"
+			dotS += "</tr>\n"
+
+			dotS += "<tr>\n"
+			dotS += "<td bgcolor=\"#27ba40\">s_filesystem_type</td>\n"
+			dotS += "<td bgcolor=\"#27ba40\">" + strconv.Itoa(int(sb.S_filesystem_type)) + "</td>\n"
+			dotS += "</tr>\n"
+
+			dotS += "<tr>\n"
+			dotS += "<td bgcolor=\"#b4f0b1\">s_inodes_count</td>\n"
+			dotS += "<td bgcolor=\"#b4f0b1\">" + strconv.Itoa(int(sb.S_inodes_count)) + "</td>\n"
+			dotS += "</tr>\n"
+
+			dotS += "<tr>\n"
+			dotS += "<td bgcolor=\"#27ba40\">s_blocks_count</td>\n"
+			dotS += "<td bgcolor=\"#27ba40\">" + strconv.Itoa(int(sb.S_blocks_count)) + "</td>\n"
+			dotS += "</tr>\n"
+
+			dotS += "<tr>\n"
+			dotS += "<td bgcolor=\"#b4f0b1\">s_free_blocks_count</td>\n"
+			dotS += "<td bgcolor=\"#b4f0b1\">" + strconv.Itoa(int(sb.S_free_blocks_count)) + "</td>\n"
+			dotS += "</tr>\n"
+
+			dotS += "<tr>\n"
+			dotS += "<td bgcolor=\"#27ba40\">s_free_inodes_count</td>\n"
+			dotS += "<td bgcolor=\"#27ba40\">" + strconv.Itoa(int(sb.S_free_inodes_count)) + "</td>\n"
+			dotS += "</tr>\n"
+
+			tm := time.Unix(sb.S_mtime, 0)
+			dotS += "<tr>\n"
+			dotS += "<td bgcolor=\"#b4f0b1\">s_mtime</td>\n"
+			dotS += "<td bgcolor=\"#b4f0b1\">" + tm.Format("2006-01-02 15:04:05") + "</td>\n"
+			dotS += "</tr>\n"
+
+			tm = time.Unix(sb.S_umtime, 0)
+			dotS += "<tr>\n"
+			dotS += "<td bgcolor=\"#27ba40\">s_umtime</td>\n"
+			dotS += "<td bgcolor=\"#27ba40\">" + tm.Format("2006-01-02 15:04:05") + "</td>\n"
+			dotS += "</tr>\n"
+
+			dotS += "<tr>\n"
+			dotS += "<td bgcolor=\"#b4f0b1\">s_mnt_count</td>\n"
+			dotS += "<td bgcolor=\"#b4f0b1\">" + strconv.Itoa(int(sb.S_mnt_count)) + "</td>\n"
+			dotS += "</tr>\n"
+
+			dotS += "<tr>\n"
+			dotS += "<td bgcolor=\"#27ba40\">s_magic</td>\n"
+			dotS += "<td bgcolor=\"#27ba40\">" + strconv.Itoa(int(sb.S_magic)) + "</td>\n"
+			dotS += "</tr>\n"
+
+			dotS += "<tr>\n"
+			dotS += "<td bgcolor=\"#b4f0b1\">s_inode_s</td>\n"
+			dotS += "<td bgcolor=\"#b4f0b1\">" + strconv.Itoa(int(sb.S_inode_s)) + "</td>\n"
+			dotS += "</tr>\n"
+
+			dotS += "<tr>\n"
+			dotS += "<td bgcolor=\"#27ba40\">s_block_s</td>\n"
+			dotS += "<td bgcolor=\"#27ba40\">" + strconv.Itoa(int(sb.S_block_s)) + "</td>\n"
+			dotS += "</tr>\n"
+
+			dotS += "<tr>\n"
+			dotS += "<td bgcolor=\"#b4f0b1\">s_firts_ino</td>\n"
+			dotS += "<td bgcolor=\"#b4f0b1\">" + strconv.Itoa(int(sb.S_firts_ino)) + "</td>\n"
+			dotS += "</tr>\n"
+
+			dotS += "<tr>\n"
+			dotS += "<td bgcolor=\"#27ba40\">s_first_blo</td>\n"
+			dotS += "<td bgcolor=\"#27ba40\">" + strconv.Itoa(int(sb.S_first_blo)) + "</td>\n"
+			dotS += "</tr>\n"
+
+			dotS += "<tr>\n"
+			dotS += "<td bgcolor=\"#b4f0b1\">s_bm_inode_start</td>\n"
+			dotS += "<td bgcolor=\"#b4f0b1\">" + strconv.Itoa(int(sb.S_bm_inode_start)) + "</td>\n"
+			dotS += "</tr>\n"
+
+			dotS += "<tr>\n"
+			dotS += "<td bgcolor=\"#27ba40\">s_bm_block_start</td>\n"
+			dotS += "<td bgcolor=\"#27ba40\">" + strconv.Itoa(int(sb.S_bm_block_start)) + "</td>\n"
+			dotS += "</tr>\n"
+
+			dotS += "<tr>\n"
+			dotS += "<td bgcolor=\"#b4f0b1\">s_inode_start</td>\n"
+			dotS += "<td bgcolor=\"#b4f0b1\">" + strconv.Itoa(int(sb.S_inode_start)) + "</td>\n"
+			dotS += "</tr>\n"
+
+			dotS += "<tr>\n"
+			dotS += "<td bgcolor=\"#27ba40\">s_block_start</td>\n"
+			dotS += "<td bgcolor=\"#27ba40\">" + strconv.Itoa(int(sb.S_block_start)) + "</td>\n"
+			dotS += "</tr>\n"
+
+			dotS += "</table>>];\n"
+			dotS += "}"
+
+			errD = os.WriteFile("Reportes/"+nombreD+".dot", []byte(dotS), 0777)
+			if errD != nil {
+				fmt.Println(errD)
+			}
+
+			ext := Extrep
+			_, errD = exec.Command("dot", "-T"+Extrep, "Reportes/"+nombreD+".dot", "-o", "Reportes/"+nombreD).Output()
+			if errD != nil {
+				fmt.Printf("%s", errD)
+			}
+			_, errD = exec.Command("dot", "-T"+ext, "Reportes/"+nombreD+".dot", "-o", Dirrep+nombreD).Output()
+			if errD != nil {
+				fmt.Printf("%s", errD)
+			}
+
+			return Structs.Resp{Res: "SE GENERO EL REPORTE SB"}
+		}
+		return Structs.Resp{Res: "DISCO INEXISTENTE"}
 	}
 	return Structs.Resp{Res: "NO SE HA ENCONTRADO ALGUNA MONTURA CON EL ID: " + Idrep}
 }
 
-func sbR() Structs.Resp {
+func fileR() Structs.Resp {
 	nodo := Mlist.buscar(Idrep)
 	if nodo != nil {
 

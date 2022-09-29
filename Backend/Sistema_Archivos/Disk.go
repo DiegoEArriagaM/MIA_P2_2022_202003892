@@ -49,16 +49,6 @@ func mkdisk() Structs.Resp {
 	if err != nil {
 		fmt.Printf("%s", err)
 	}
-	/*out, err := exec.Command("mkdir", Directorio_disk, " -p").Output()
-	fmt.Println(string(out[:]))
-	if err != nil {
-		fmt.Printf("%s", err)
-	}
-	out, err = exec.Command("chmod", "-R ", "777", Directorio_disk).Output()
-	fmt.Println(string(out[:]))
-	if err != nil {
-		fmt.Printf("%s", err)
-	}*/
 
 	size := Sdisk
 	if Udisk == "m" {

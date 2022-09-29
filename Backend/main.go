@@ -16,7 +16,6 @@ import (
 )
 
 func main() {
-
 	fmt.Println("Inicio")
 	router := mux.NewRouter()
 	enableCORS(router)
