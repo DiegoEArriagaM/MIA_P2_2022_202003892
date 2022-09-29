@@ -206,7 +206,7 @@ func mkfs() Structs.Resp {
 					inodo.I_mtime = time.Now().Unix()
 					inodo.I_perm = 664
 					inodo.I_block[0] = sb.S_block_start
-					for i := 1; i < 15; i++ {
+					for i := 1; i < 16; i++ {
 						inodo.I_block[i] = -1
 					}
 					inodo.I_type = '0'
@@ -239,13 +239,14 @@ func mkfs() Structs.Resp {
 					inodoU.I_mtime = time.Now().Unix()
 					inodoU.I_perm = 700
 					inodoU.I_block[0] = sb.S_block_start + int32(unsafe.Sizeof(Structs.BloqueCarpeta{}))
-					for i := 1; i < 15; i++ {
+					for i := 1; i < 16; i++ {
 						inodoU.I_block[i] = -1
 					}
 					s := "1,G,root\n1,U,root,root,123\n"
 					inodoU.I_s = int32(unsafe.Sizeof(s))
 					inodoU.I_type = '1'
-					file.Seek(int64(sb.S_inode_start+int32(unsafe.Sizeof(Structs.TablaInodo{}))), 0)
+					seek, _ := file.Seek(int64(sb.S_inode_start+int32(unsafe.Sizeof(Structs.TablaInodo{}))), 0)
+					fmt.Println(seek)
 					var bufferInodo2 bytes.Buffer
 					errf = binary.Write(&bufferInodo2, binary.BigEndian, inodoU)
 					EscribirFile(file, bufferInodo2.Bytes())
@@ -269,10 +270,11 @@ func mkfs() Structs.Resp {
 					errf = binary.Write(&bufferSB, binary.BigEndian, sb)
 					EscribirFile(file, bufferSB.Bytes())
 
-					ch0 := '0'
-					ch1 := '1'
+					var ch0 byte = '0'
+					var ch1 byte = '1'
 
 					for i := 0; i < numEstructuras; i++ {
+						fmt.Println(int(unsafe.Sizeof(ch0)))
 						file.Seek(int64(int(sb.S_bm_inode_start)+i), 0)
 						var bufferC0 bytes.Buffer
 						errf = binary.Write(&bufferC0, binary.BigEndian, ch0)
@@ -284,6 +286,7 @@ func mkfs() Structs.Resp {
 					EscribirFile(file, bufferC1.Bytes())
 					file.Seek(int64(int(sb.S_bm_inode_start)+1), 0)
 					EscribirFile(file, bufferC1.Bytes())
+					fmt.Println(seek)
 
 					for i := 0; i < nBloques; i++ {
 						file.Seek(int64(int(sb.S_bm_block_start)+i), 0)
@@ -336,7 +339,7 @@ func mkfs() Structs.Resp {
 					inodo.I_mtime = time.Now().Unix()
 					inodo.I_perm = 664
 					inodo.I_block[0] = sb.S_block_start
-					for i := 1; i < 15; i++ {
+					for i := 1; i < 16; i++ {
 						inodo.I_block[i] = -1
 					}
 					inodo.I_type = '0'
@@ -369,7 +372,7 @@ func mkfs() Structs.Resp {
 					inodoU.I_mtime = time.Now().Unix()
 					inodoU.I_perm = 700
 					inodoU.I_block[0] = sb.S_block_start + int32(unsafe.Sizeof(Structs.BloqueCarpeta{}))
-					for i := 1; i < 15; i++ {
+					for i := 1; i < 16; i++ {
 						inodoU.I_block[i] = -1
 					}
 					s := "1,G,root\n1,U,root,root,123\n"
@@ -450,6 +453,19 @@ func nameConten(cadena string) [12]byte {
 	return name
 }
 
+func nameConten2(array [12]byte) string {
+	bname := ""
+
+	for j := 0; j < len(array); j++ {
+		if array[j] == '\000' {
+			break
+		}
+		bname += string([]byte{array[j]})
+	}
+
+	return bname
+}
+
 func archivoContent(cadena string) [64]byte {
 	var content [64]byte
 
@@ -461,4 +477,17 @@ func archivoContent(cadena string) [64]byte {
 	}
 
 	return content
+}
+
+func archivoContent2(array [64]byte) string {
+	var cadena string
+
+	for i := 0; i < 64; i++ {
+		if array[i] == '\000' {
+			break
+		}
+		cadena += string([]byte{array[i]})
+	}
+
+	return cadena
 }

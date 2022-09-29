@@ -195,9 +195,219 @@ func disk() Structs.Resp {
 func tree() Structs.Resp {
 	nodo := Mlist.buscar(Idrep)
 	if nodo != nil {
+		Dirrep = GetDirectorio(Prep)
+		Extrep = GetExtension(Prep)
+		nombreD := nombre(Prep)
+		err := os.MkdirAll(Dirrep, 0777)
+		if err != nil {
+			fmt.Printf("%s", err)
+		}
 
+		file, errf := os.OpenFile(nodo.Path, os.O_RDWR, 0777)
+		if errf == nil {
+			sb := Structs.SuperBloque{}
+			if nodo.Type == 'p' {
+				file.Seek(int64(nodo.Start), 0)
+			} else if nodo.Type == 'l' {
+				file.Seek(int64(nodo.Start+int(unsafe.Sizeof(Structs.EBR{}))), 0)
+			}
+			errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(sb))), binary.BigEndian, &sb)
+
+			start := int(sb.S_bm_inode_start)
+			end := start + int(sb.S_inodes_count)
+
+			inodo := Structs.TablaInodo{}
+
+			var bit byte
+			cont := 0
+
+			dot, errD := os.OpenFile("Reportes/"+nombreD+".dot", os.O_CREATE, 0777)
+			dot.Close()
+			if errD != nil {
+				fmt.Println(errD)
+			}
+
+			dotS := ""
+			dotS += "digraph G {\n"
+			dotS += "rankdir=LR;\n"
+			dotS += "node[shape=none]\n"
+
+			for i := start; i < end; i++ {
+				file.Seek(int64(i), 0)
+				errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(bit))), binary.BigEndian, &bit)
+				if bit == '1' {
+					posInodo := int(sb.S_inode_start) + (cont * int(unsafe.Sizeof(Structs.TablaInodo{})))
+					file.Seek(int64(posInodo), 0)
+					errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(Structs.TablaInodo{}))), binary.BigEndian, &inodo)
+
+					dotS += treeInodo(posInodo, file)
+
+					for j := 0; j < 16; j++ {
+						if inodo.I_block[j] != -1 {
+							if inodo.I_type == '0' {
+								dotS += treeBlock(int(inodo.I_block[j]), 0, file)
+							} else if inodo.I_type == '1' {
+								dotS += treeBlock(int(inodo.I_block[j]), 1, file)
+							}
+							dotS += conexiones(posInodo, int(inodo.I_block[j]))
+						}
+					}
+				}
+				cont++
+			}
+			dotS += "}"
+			errD = os.WriteFile("Reportes/"+nombreD+".dot", []byte(dotS), 0777)
+			if errD != nil {
+				fmt.Println(errD)
+			}
+
+			file.Close()
+
+			ext := Extrep
+			_, errD = exec.Command("dot", "-T"+Extrep, "Reportes/"+nombreD+".dot", "-o", "Reportes/"+nombreD).Output()
+			if errD != nil {
+				fmt.Printf("%s", errD)
+			}
+			_, errD = exec.Command("dot", "-T"+ext, "Reportes/"+nombreD+".dot", "-o", Dirrep+nombreD).Output()
+			if errD != nil {
+				fmt.Printf("%s", errD)
+			}
+			return Structs.Resp{Res: "SE GENERO EL REPORTE TREE"}
+		}
+		return Structs.Resp{Res: "DISCO INEXISTENTE"}
 	}
 	return Structs.Resp{Res: "NO SE HA ENCONTRADO ALGUNA MONTURA CON EL ID: " + Idrep}
+}
+
+func treeBlock(pos int, typ int, file *os.File) string {
+	dot := ""
+
+	if typ == 0 {
+		carpeta := Structs.BloqueCarpeta{}
+		file.Seek(int64(pos), 0)
+		errf := binary.Read(LeerFile(file, int(unsafe.Sizeof(Structs.BloqueCarpeta{}))), binary.BigEndian, &carpeta)
+		if errf != nil {
+			fmt.Println(errf)
+		}
+
+		dot += "n" + strconv.Itoa(pos) + "[label=<<table>\n"
+		dot += "<tr>\n"
+		dot += "<td colspan=\"2\" bgcolor=\"#f34037\">Bloque Carpeta</td>"
+		dot += "</tr>\n"
+
+		for i := 0; i < 4; i++ {
+			bname := nameConten2(carpeta.B_content[i].B_name)
+			dot += "<tr>\n"
+			dot += "<td>" + bname + "</td>\n"
+			dot += "<td port=\"" + strconv.Itoa(int(carpeta.B_content[i].B_inodo)) + "\">" + strconv.Itoa(int(carpeta.B_content[i].B_inodo)) + "</td>\n"
+			dot += "</tr>\n"
+		}
+		dot += "</table>>]\n"
+
+		for i := 0; i < 4; i++ {
+			name1 := nameConten2(carpeta.B_content[i].B_name)
+			if carpeta.B_content[i].B_inodo != -1 && (name1 != "." && name1 != "..") {
+				dot += conexiones(pos, int(carpeta.B_content[i].B_inodo))
+			}
+		}
+
+	} else if typ == 1 {
+		content := ""
+		archivo := Structs.BloqueArchivo{}
+		file.Seek(int64(pos), 0)
+		errf := binary.Read(LeerFile(file, int(unsafe.Sizeof(Structs.BloqueArchivo{}))), binary.BigEndian, &archivo)
+		if errf != nil {
+			fmt.Println(errf)
+		}
+		content = archivoContent2(archivo.B_content)
+
+		dot += "n" + strconv.Itoa(pos) + "[label=<<table>\n"
+		dot += "<tr>\n"
+		dot += "<td colspan=\"2\" bgcolor=\"#c3f8b6\">Bloque Archivo</td>"
+		dot += "</tr>\n"
+		dot += "<tr>\n"
+		dot += "<td>" + content + "</td>\n"
+		dot += "</tr>\n"
+		dot += "</table>>]\n"
+	}
+	return dot
+}
+
+func treeInodo(pos int, file *os.File) string {
+	dot := ""
+	inodo := Structs.TablaInodo{}
+	file.Seek(int64(pos), 0)
+	errf := binary.Read(LeerFile(file, int(unsafe.Sizeof(Structs.TablaInodo{}))), binary.BigEndian, &inodo)
+	if errf != nil {
+		fmt.Println(errf)
+	}
+	dot += "n" + strconv.Itoa(pos) + "[label=<<table><tr><td colspan=\"2\" bgcolor=\"#376ef3\">INODO " + strconv.Itoa(pos) + "</td></tr>\n"
+
+	dot += "<tr>\n"
+	dot += "<td>i_uid</td>\n"
+	dot += "<td>" + strconv.Itoa(int(inodo.I_uid)) + "</td>\n"
+	dot += "</tr>\n"
+
+	dot += "<tr>\n"
+	dot += "<td>i_gid</td>\n"
+	dot += "<td>" + strconv.Itoa(int(inodo.I_gid)) + "</td>\n"
+	dot += "</tr>\n"
+
+	dot += "<tr>\n"
+	dot += "<td>i_s</td>\n"
+	dot += "<td>" + strconv.Itoa(int(inodo.I_s)) + "</td>\n"
+	dot += "</tr>\n"
+
+	tm := time.Unix(inodo.I_atime, 0)
+	dot += "<tr>\n"
+	dot += "<td>i_atime</td>\n"
+	dot += "<td>" + tm.Format("2006-01-02 15:04:05") + "</td>\n"
+	dot += "</tr>\n"
+
+	tm = time.Unix(inodo.I_ctime, 0)
+	dot += "<tr>\n"
+	dot += "<td>i_ctime</td>\n"
+	dot += "<td>" + tm.Format("2006-01-02 15:04:05") + "</td>\n"
+	dot += "</tr>\n"
+
+	tm = time.Unix(inodo.I_mtime, 0)
+	dot += "<tr>\n"
+	dot += "<td>i_mtime</td>\n"
+	dot += "<td>" + tm.Format("2006-01-02 15:04:05") + "</td>\n"
+	dot += "</tr>\n"
+
+	for j := 0; j < 16; j++ {
+		if inodo.I_block[j] != -1 {
+			dot += "<tr>\n"
+			dot += "<td>ap" + strconv.Itoa(j) + "</td>\n"
+			dot += "<td port=\"" + strconv.Itoa(int(inodo.I_block[j])) + "\">" + strconv.Itoa(int(inodo.I_block[j])) + "</td>\n"
+			dot += "</tr>\n"
+		} else {
+			dot += "<tr>\n"
+			dot += "<td>i_block</td>\n"
+			dot += "<td>-1</td>\n"
+			dot += "</tr>\n"
+		}
+	}
+
+	dot += "<tr>\n"
+	dot += "<td>i_type</td>\n"
+	dot += "<td>" + string(inodo.I_type) + "</td>\n"
+	dot += "</tr>\n"
+
+	dot += "<tr>\n"
+	dot += "<td>i_perm</td>\n"
+	dot += "<td>" + strconv.Itoa(int(inodo.I_perm)) + "</td>\n"
+	dot += "</tr>\n"
+
+	dot += "</table>>]\n"
+
+	return dot
+}
+
+func conexiones(inicio int, final int) string {
+	dot := "n" + strconv.Itoa(inicio) + ":" + strconv.Itoa(final) + "->n" + strconv.Itoa(final) + ";\n"
+	return dot
 }
 
 func sbR() Structs.Resp {

@@ -97,7 +97,7 @@ type TablaInodo struct {
 	I_atime int64
 	I_ctime int64
 	I_mtime int64
-	I_block [15]int32
+	I_block [16]int32
 	I_type  byte
 	I_perm  int32
 }
