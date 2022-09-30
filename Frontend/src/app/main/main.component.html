@@ -1,8 +1,14 @@
-<div class="card">
+<nav class="navbar navbar-expand-lg bg-light">
+<div class="container-fluid">
   <div class="card-header">
     <p>{{inicio["res"]}}</p>
   </div>
+  <div class="d-flex">
+    <button (click)="irLogin()" *ngIf="!this.entrada.login" class="btn btn-success" type="button">Login</button>
+    <button (click)="logout()" *ngIf="this.entrada.login" class="btn btn-danger" type="button">Logout</button>
+  </div>
 </div>
+</nav>
 
 <div class="mb-3 row">
   <label for="inputPassword" class="col-sm-2 col-form-label">Comando de entrada</label>

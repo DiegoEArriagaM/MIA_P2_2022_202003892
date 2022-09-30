@@ -63,6 +63,7 @@ export class MainComponent implements OnInit {
       this.execE.idMoun=sessionStorage['idMoun']
       this.execE.nombreU=sessionStorage['nombreU']
       this.execE.login=sessionStorage['login']
+      console.log(this.entrada)
     }
     this.terminal=""
     this.inicio=""
@@ -109,7 +110,6 @@ export class MainComponent implements OnInit {
   mandarComando(){
     const r=this.t
     this.entrada.comando=this.limpiar(this.entrada.comando)
-    const command=this.getComand();
     this.servicios.Entrada(this.entrada).subscribe(
       data=>{
         let datos:any=data
@@ -216,5 +216,26 @@ export class MainComponent implements OnInit {
   verRep(name:any){
     const dir="http://localhost:8000/Reportes/"+name
         window.open(dir)
+  }
+
+  irLogin(){
+    this.route.navigate(['login'])
+  }
+
+  logout(){
+    this.entrada.comando="logout"
+    this.servicios.Entrada(this.entrada).subscribe(
+      data=>{
+        let datos:any=data
+        alert(datos.res)
+        this.actualizarU(datos.usuario)
+      },
+      err=>{
+        console.log(err)
+      },() => {
+        // 'onCompleted' callback.
+        // No errors, route to new page here
+      }
+    )
   }
 }

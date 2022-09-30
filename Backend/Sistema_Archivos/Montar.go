@@ -114,7 +114,7 @@ func mount() Structs.Resp {
 				if pos != -1 {
 					if mbr.Mbr_partition[pos].Part_type == 'e' {
 						file.Close()
-						return Structs.Resp{Res: "NO SE PUEDE MONTAR UNA PARTICION EXTENDIDA ", U: UsuarioL}
+						return Structs.Resp{Res: "NO SE PUEDE MONTAR UNA PARTICION EXTENDIDA "}
 					}
 					sb := Structs.SuperBloque{}
 					if mbr.Mbr_partition[pos].Part_status == '0' || mbr.Mbr_partition[pos].Part_status == '1' {

@@ -21,7 +21,6 @@ func main() {
 	enableCORS(router)
 
 	router.HandleFunc("/", func(writer http.ResponseWriter, req *http.Request) {
-		Sistema_Archivos.UsuarioL.IdMount = "dasdsa"
 		res := Structs.Inicio{
 			Res: "Simulador de Disco Duro Web Corriendo",
 			U:   Sistema_Archivos.UsuarioL,
@@ -64,8 +63,10 @@ func main() {
 			NombreU: entrada.NombreU,
 			Login:   entrada.Login,
 		}
+		fmt.Println(Sistema_Archivos.UsuarioL)
 		r := Sistema_Archivos.Lector(entrada.Command)
 		r.U = Sistema_Archivos.UsuarioL
+		fmt.Println(Sistema_Archivos.UsuarioL)
 
 		json.NewEncoder(writer).Encode(r)
 	}).Methods("GET", "POST")
