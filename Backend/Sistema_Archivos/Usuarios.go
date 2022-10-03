@@ -2,11 +2,13 @@ package Sistema_Archivos
 
 import (
 	"Backend/Structs"
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 	"unsafe"
 )
 
@@ -15,9 +17,9 @@ var NameUsuario = " "
 var PassUsuario = " "
 var GruopUsuario = " "
 var CambioCont = false
-var sb Structs.SuperBloque
-var file *os.File
-var errf error
+var sbU Structs.SuperBloque
+var fileU *os.File
+var errfU error
 
 func logout() Structs.Resp {
 	if UsuarioL.IdU == 0 {
@@ -37,8 +39,8 @@ func login() Structs.Resp {
 		NameUsuario = " "
 		PassUsuario = " "
 		GruopUsuario = " "
-		sb = Structs.SuperBloque{}
-		file = nil
+		sbU = Structs.SuperBloque{}
+		fileU = nil
 	}()
 
 	if UsuarioL.IdU != 0 {
@@ -47,31 +49,30 @@ func login() Structs.Resp {
 
 	nodo := Mlist.buscar(IdUsuario)
 	if nodo != nil {
-
-		file, errf = os.OpenFile(nodo.Path, os.O_RDWR, 0777)
-		if errf == nil {
+		fileU, errfU = os.OpenFile(nodo.Path, os.O_RDWR, 0777)
+		if errfU == nil {
 			banderaU := false
 			banderaG := false
 			if nodo.Type == 'p' {
 				mbr := Structs.MBR{}
-				file.Seek(0, 0)
-				errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(mbr))), binary.BigEndian, &mbr)
+				fileU.Seek(0, 0)
+				errfU = binary.Read(LeerFile(fileU, int(unsafe.Sizeof(mbr))), binary.BigEndian, &mbr)
 				if mbr.Mbr_partition[nodo.Pos].Part_status != '2' {
 					return Structs.Resp{Res: "NO SE HA FORMATEADO LA PARTICION"}
 				}
-				file.Seek(int64(nodo.Start), 0)
-				errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(sb))), binary.BigEndian, &sb)
+				fileU.Seek(int64(nodo.Start), 0)
+				errfU = binary.Read(LeerFile(fileU, int(unsafe.Sizeof(sbU))), binary.BigEndian, &sbU)
 			} else if nodo.Type == 'l' {
 				ebr := Structs.EBR{}
-				file.Seek(int64(nodo.Start), 0)
-				errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(ebr))), binary.BigEndian, &ebr)
+				fileU.Seek(int64(nodo.Start), 0)
+				errfU = binary.Read(LeerFile(fileU, int(unsafe.Sizeof(ebr))), binary.BigEndian, &ebr)
 				if ebr.Part_status != '2' {
 					return Structs.Resp{Res: "NO SE HA FORMATEADO LA PARTICION"}
 				}
-				file.Seek(int64(nodo.Start+int(unsafe.Sizeof(Structs.EBR{}))), 0)
-				errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(sb))), binary.BigEndian, &sb)
+				fileU.Seek(int64(nodo.Start+int(unsafe.Sizeof(Structs.EBR{}))), 0)
+				errfU = binary.Read(LeerFile(fileU, int(unsafe.Sizeof(sbU))), binary.BigEndian, &sbU)
 			}
-			content := getConten(int(sb.S_inode_start) + int(unsafe.Sizeof(Structs.TablaInodo{})))
+			content := getConten(int(sbU.S_inode_start) + int(unsafe.Sizeof(Structs.TablaInodo{})))
 			usuarios := splitUsr(content)
 			grupos := splitGrp(content)
 			var datosU []string
@@ -90,7 +91,6 @@ func login() Structs.Resp {
 				}
 			}
 		t0:
-			fmt.Println(usuarios, grupos)
 			if banderaU {
 				if banderaG {
 					UsuarioL.NombreU = datosU[3]
@@ -100,13 +100,13 @@ func login() Structs.Resp {
 					IdG, _ := strconv.Atoi(datosG[0])
 					UsuarioL.IdG = int32(IdG)
 					UsuarioL.Login = true
-					file.Close()
+					fileU.Close()
 					return Structs.Resp{Res: "SE INICIO SESION COMO " + UsuarioL.NombreU}
 				}
-				file.Close()
+				fileU.Close()
 				return Structs.Resp{Res: "GRUPO NO ENCONTRADO"}
 			}
-			file.Close()
+			fileU.Close()
 			return Structs.Resp{Res: "USUARIO NO ENCONTRADO"}
 		}
 		return Structs.Resp{Res: "DISCO INEXISTENTE"}
@@ -114,16 +114,177 @@ func login() Structs.Resp {
 	return Structs.Resp{Res: "NO SE HA ENCONTRADO ALGUNA MONTURA CON EL ID: " + IdUsuario}
 }
 
+func mkgrp() Structs.Resp {
+	defer func() {
+		IdUsuario = " "
+		NameUsuario = " "
+		PassUsuario = " "
+		GruopUsuario = " "
+		sbU = Structs.SuperBloque{}
+		fileU = nil
+	}()
+	if UsuarioL.IdU == 1 && UsuarioL.IdG == 1 {
+		if NameUsuario == " " {
+			return Structs.Resp{Res: "TIENE QUE INGRESAR COMO EL USUARIO root DEL GRUPO 1 PARA EJECUTAR ESTE COMANDO"}
+		}
+
+		nodo := Mlist.buscar(UsuarioL.IdMount)
+		if nodo != nil {
+			fileU, errfU = os.OpenFile(nodo.Path, os.O_RDWR, 0777)
+			if errfU == nil {
+				if nodo.Type == 'p' {
+					fileU.Seek(int64(nodo.Start), 0)
+					errfU = binary.Read(LeerFile(fileU, int(unsafe.Sizeof(sbU))), binary.BigEndian, &sbU)
+				} else if nodo.Type == 'l' {
+					fileU.Seek(int64(nodo.Start+int(unsafe.Sizeof(Structs.EBR{}))), 0)
+					errfU = binary.Read(LeerFile(fileU, int(unsafe.Sizeof(sbU))), binary.BigEndian, &sbU)
+				}
+
+				content := getConten(int(sbU.S_inode_start) + int(unsafe.Sizeof(Structs.TablaInodo{})))
+				nuevoGrp := ""
+				cantBlockAnt := len(splitConten(content))
+				grupos := splitGrp(content)
+
+				if !grupoExist(grupos, NameUsuario) {
+					nuevoGrp = getGID(grupos) + ",G," + NameUsuario + "\n"
+					content += nuevoGrp
+					usersTxt := splitConten(content)
+					cantBlockAct := len(usersTxt)
+
+					if len(usersTxt) > 16 {
+						return Structs.Resp{Res: "NO SE PUEDE GUARDAR EL GRUPO"}
+					}
+
+					if int(sbU.S_free_blocks_count) < (cantBlockAct - cantBlockAnt) {
+						return Structs.Resp{Res: "NO HAY SUFICIENTES BLOQUES LIBRES PARA ACTUALIZAR EL ARCHIVO"}
+					}
+
+					//Se busca espacion en el bitmap de bloques
+					var bit byte
+					start := int(sbU.S_bm_block_start)
+					end := start + int(sbU.S_block_start)
+					cantContiguos := 0
+					inicioBM := -1
+					inicioB := -1
+					contadorA := 0
+					if (cantBlockAct - cantBlockAnt) > 0 {
+						for i := start; i < end; i++ {
+							fileU.Seek(int64(i), 0)
+							errfU = binary.Read(LeerFile(fileU, int(unsafe.Sizeof(bit))), binary.BigEndian, &bit)
+							if bit == '1' {
+								cantContiguos = 0
+								inicioBM = -1
+								inicioB = -1
+							} else {
+								if cantContiguos == 0 {
+									inicioBM = i
+									inicioB = contadorA
+								}
+								cantContiguos++
+							}
+							if cantContiguos >= (cantBlockAct - cantBlockAnt) {
+								break
+							}
+							contadorA++
+						}
+						if inicioBM == -1 || cantContiguos != (cantBlockAct-cantBlockAnt) {
+							return Structs.Resp{Res: "NO HAY SUFICIENTES BLOQUES CONTIGUOS PARA ACTUALIZAR EL ARCHIVO"}
+						}
+
+						for i := inicioBM; i < (inicioBM + (cantBlockAct - cantBlockAnt)); i++ {
+							var uno byte = '1'
+							fileU.Seek(int64(i), 0)
+							var bufferByte bytes.Buffer
+							errf := binary.Write(&bufferByte, binary.BigEndian, uno)
+							if errf != nil {
+								fmt.Println(errf)
+							}
+							EscribirFile(fileU, bufferByte.Bytes())
+						}
+						sbU.S_free_blocks_count = int32(int(sbU.S_free_blocks_count) - (cantBlockAct - cantBlockAnt))
+						bit2 := 0
+						for k := start; k < end; k++ {
+							fileU.Seek(int64(k), 0)
+							errfU = binary.Read(LeerFile(fileU, int(unsafe.Sizeof(bit))), binary.BigEndian, &bit)
+							if bit == '0' {
+								break
+							}
+							bit2++
+						}
+						sbU.S_first_blo = int32(bit2)
+					}
+					inodo := Structs.TablaInodo{}
+					seekInodo := int(sbU.S_inode_start) + int(unsafe.Sizeof(inodo))
+					fileU.Seek(int64(seekInodo), 0)
+					errfU = binary.Read(LeerFile(fileU, int(unsafe.Sizeof(inodo))), binary.BigEndian, &inodo)
+
+					tamanio := 0
+					for tm := 0; tm < len(usersTxt); tm++ {
+						tamanio += len(usersTxt[tm])
+					}
+					inodo.I_s = int32(tamanio)
+					inodo.I_mtime = time.Now().Unix()
+
+					contador := 0
+					j := 0
+
+					for j < len(usersTxt) {
+						CambioCont = false
+						inodo = agregarArchivo(usersTxt[j], inodo, j, inicioB+contador)
+						if CambioCont {
+							contador++
+						}
+						j++
+					}
+
+					fileU.Seek(int64(seekInodo), 0)
+					var bufferInodo bytes.Buffer
+					errf := binary.Write(&bufferInodo, binary.BigEndian, inodo)
+					if errf != nil {
+						fmt.Println(errf)
+					}
+					EscribirFile(fileU, bufferInodo.Bytes())
+					if nodo.Type == 'p' {
+						fileU.Seek(int64(nodo.Start), 0)
+						var bufferSB bytes.Buffer
+						errf = binary.Write(&bufferSB, binary.BigEndian, sbU)
+						if errf != nil {
+							fmt.Println(errf)
+						}
+						EscribirFile(fileU, bufferSB.Bytes())
+					} else if nodo.Type == 'l' {
+						fileU.Seek(int64(nodo.Start+int(unsafe.Sizeof(Structs.EBR{}))), 0)
+						var bufferSB bytes.Buffer
+						errf = binary.Write(&bufferSB, binary.BigEndian, sbU)
+						if errf != nil {
+							fmt.Println(errf)
+						}
+						EscribirFile(fileU, bufferSB.Bytes())
+					}
+
+					fileU.Close()
+					return Structs.Resp{Res: "SE GUARDO EL GRUPO " + NameUsuario}
+
+				}
+				return Structs.Resp{Res: "GRUPO " + NameUsuario + " YA EXISTE"}
+			}
+			return Structs.Resp{Res: "DISCO INEXISTENTE"}
+		}
+		return Structs.Resp{Res: "NO SE HA ENCONTRADO ALGUNA MONTURA CON EL ID: " + UsuarioL.IdMount}
+	}
+	return Structs.Resp{Res: "TIENE QUE INGRESAR COMO EL USUARIO root DEL GRUPO 1 PARA EJECUTAR ESTE COMANDO"}
+}
+
 func getConten(inodoStart int) string {
 	var inodo Structs.TablaInodo
 	var archivo Structs.BloqueArchivo
-	file.Seek(int64(inodoStart), 0)
-	errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(inodo))), binary.BigEndian, &inodo)
+	fileU.Seek(int64(inodoStart), 0)
+	errfU = binary.Read(LeerFile(fileU, int(unsafe.Sizeof(inodo))), binary.BigEndian, &inodo)
 	content := ""
 	for i := 0; i < 16; i++ {
 		if inodo.I_block[i] != -1 {
-			file.Seek(int64(inodo.I_block[i]), 0)
-			errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(archivo))), binary.BigEndian, &archivo)
+			fileU.Seek(int64(inodo.I_block[i]), 0)
+			errfU = binary.Read(LeerFile(fileU, int(unsafe.Sizeof(archivo))), binary.BigEndian, &archivo)
 			content += archivoContent2(archivo.B_content)
 		}
 	}
@@ -157,4 +318,100 @@ func splitGrp(cadena string) []string {
 		}
 	}
 	return split
+}
+
+func splitConten(cadena string) []string {
+	controlador := 0
+	var split []string
+	aux := ""
+	for i := 0; i < len(cadena); i++ {
+		if controlador < 64 {
+			aux += string([]byte{cadena[i]})
+			controlador++
+		}
+		if len(aux) == 64 {
+			split = append(split, aux)
+			aux = ""
+			controlador = 0
+		}
+	}
+	if controlador != 0 {
+		split = append(split, aux)
+		aux = ""
+		controlador = 0
+	}
+	return split
+}
+
+func grupoExist(grupos []string, name string) bool {
+	var datosG []string
+	for i := 0; i < len(grupos); i++ {
+		datosG = strings.Split(grupos[i], ",")
+		if datosG[2] == name && datosG[0] != "0" {
+			return true
+		}
+	}
+	return false
+}
+
+func getGID(grupos []string) string {
+	var datosG []string
+	gid := 0
+	for i := 0; i < len(grupos); i++ {
+		datosG = strings.Split(grupos[i], ",")
+		id, _ := strconv.Atoi(datosG[0])
+		if gid < id {
+			gid++
+		}
+	}
+	return strconv.Itoa(gid + 1)
+}
+
+func getUID(usuarios []string) string {
+	var datosG []string
+	gid := 0
+	for i := 0; i < len(usuarios); i++ {
+		datosG = strings.Split(usuarios[i], ",")
+		id, _ := strconv.Atoi(datosG[0])
+		if gid < id {
+			gid++
+		}
+	}
+	return strconv.Itoa(gid + 1)
+}
+
+func agregarArchivo(cadena string, inodo Structs.TablaInodo, j int, aux int) Structs.TablaInodo {
+	in := Structs.TablaInodo{}
+	in.I_type = 'F'
+	for i := 0; i < 16; i++ {
+		if inodo.I_block[i] != -1 && i == j {
+			var archivo Structs.BloqueArchivo
+			fileU.Seek(int64(inodo.I_block[i]), 0)
+			errfU = binary.Read(LeerFile(fileU, int(unsafe.Sizeof(archivo))), binary.BigEndian, &archivo)
+			archivo.B_content = archivoContent(cadena)
+			fileU.Seek(int64(inodo.I_block[i]), 0)
+			var bufferArchivo bytes.Buffer
+			errf := binary.Write(&bufferArchivo, binary.BigEndian, archivo)
+			if errf != nil {
+				fmt.Println(errf)
+			}
+			EscribirFile(fileU, bufferArchivo.Bytes())
+			return inodo
+		} else if inodo.I_block[i] == -1 && aux != -1 {
+			var archivo Structs.BloqueArchivo
+			seek := int(sbU.S_block_start) + (aux * int(unsafe.Sizeof(archivo)))
+			archivo.B_content = archivoContent(cadena)
+			fileU.Seek(int64(seek), 0)
+			var bufferArchivo bytes.Buffer
+			errf := binary.Write(&bufferArchivo, binary.BigEndian, archivo)
+			if errf != nil {
+				fmt.Println(errf)
+			}
+			EscribirFile(fileU, bufferArchivo.Bytes())
+			inodo.I_block[i] = int32(seek)
+			CambioCont = true
+			return inodo
+		}
+	}
+	return in
 }

@@ -607,6 +607,54 @@ func Lector(comando string) Structs.Resp {
 				}
 			}
 			return logout()
+		} else if strncmp(entradaL, "mkgrp") {
+			i := 5
+			for entradaL[i] == ' ' && len(entradaL) > 0 {
+				i++
+			}
+			entradaL = entradaL[i:]
+			entradaO = entradaO[i:]
+			for len(entradaO) > 0 {
+				if strncmp(entradaL, "-name") {
+					i = find(entradaL, "=") + 1
+					for entradaL[i] == ' ' && len(entradaL) > 0 {
+						i++
+					}
+					entradaL = entradaL[i:]
+					entradaO = entradaO[i:]
+
+					if entradaL[0] == '"' {
+						entradaL = entradaL[1:]
+						entradaO = entradaO[1:]
+
+						i = find(entradaL, "\"")
+						p := entradaO[:i]
+						NameUsuario = p
+						i += 1
+						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+							i++
+						}
+						entradaL = entradaL[i:]
+						entradaO = entradaO[i:]
+
+					} else {
+						i = find(entradaL, " ")
+						p := entradaO[:i]
+						NameUsuario = p
+						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+							i++
+						}
+						entradaL = entradaL[i:]
+						entradaO = entradaO[i:]
+					}
+
+				} else if strncmp(entradaL, "#") {
+					break
+				} else {
+					return Structs.Resp{Res: "ERROR EN EL COMANDO DE ENTRADA: " + entradaO}
+				}
+			}
+			return mkgrp()
 		} else if strncmp(entradaL, "rep") {
 			i := 3
 			for entradaL[i] == ' ' && len(entradaL) > 0 {

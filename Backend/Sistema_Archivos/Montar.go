@@ -245,8 +245,8 @@ func mkfs() Structs.Resp {
 					s := "1,G,root\n1,U,root,root,123\n"
 					inodoU.I_s = int32(unsafe.Sizeof(s))
 					inodoU.I_type = '1'
-					seek, _ := file.Seek(int64(sb.S_inode_start+int32(unsafe.Sizeof(Structs.TablaInodo{}))), 0)
-					fmt.Println(seek)
+					file.Seek(int64(sb.S_inode_start+int32(unsafe.Sizeof(Structs.TablaInodo{}))), 0)
+
 					var bufferInodo2 bytes.Buffer
 					errf = binary.Write(&bufferInodo2, binary.BigEndian, inodoU)
 					EscribirFile(file, bufferInodo2.Bytes())
@@ -274,7 +274,7 @@ func mkfs() Structs.Resp {
 					var ch1 byte = '1'
 
 					for i := 0; i < numEstructuras; i++ {
-						fmt.Println(int(unsafe.Sizeof(ch0)))
+
 						file.Seek(int64(int(sb.S_bm_inode_start)+i), 0)
 						var bufferC0 bytes.Buffer
 						errf = binary.Write(&bufferC0, binary.BigEndian, ch0)
@@ -286,7 +286,6 @@ func mkfs() Structs.Resp {
 					EscribirFile(file, bufferC1.Bytes())
 					file.Seek(int64(int(sb.S_bm_inode_start)+1), 0)
 					EscribirFile(file, bufferC1.Bytes())
-					fmt.Println(seek)
 
 					for i := 0; i < nBloques; i++ {
 						file.Seek(int64(int(sb.S_bm_block_start)+i), 0)

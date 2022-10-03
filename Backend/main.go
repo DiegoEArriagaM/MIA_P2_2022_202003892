@@ -63,10 +63,8 @@ func main() {
 			NombreU: entrada.NombreU,
 			Login:   entrada.Login,
 		}
-		fmt.Println(Sistema_Archivos.UsuarioL)
 		r := Sistema_Archivos.Lector(entrada.Command)
 		r.U = Sistema_Archivos.UsuarioL
-		fmt.Println(Sistema_Archivos.UsuarioL)
 
 		json.NewEncoder(writer).Encode(r)
 	}).Methods("GET", "POST")
