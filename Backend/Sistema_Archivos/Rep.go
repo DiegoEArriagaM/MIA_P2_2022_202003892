@@ -2,6 +2,7 @@ package Sistema_Archivos
 
 import (
 	"Backend/Structs"
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"os"
@@ -577,7 +578,101 @@ func sbR() Structs.Resp {
 func fileR() Structs.Resp {
 	nodo := Mlist.buscar(Idrep)
 	if nodo != nil {
+		if Rutarep != " " {
+			Dirrep = GetDirectorio(Prep)
+			Extrep = GetExtension(Prep)
+			nombreD := nombre(Prep)
 
+			err := os.MkdirAll(Dirrep, 0777)
+			if err != nil {
+				fmt.Printf("%s", err)
+			}
+			file, errf := os.OpenFile(nodo.Path, os.O_RDWR, 0777)
+			if errf == nil {
+				sb := Structs.SuperBloque{}
+				if nodo.Type == 'p' {
+					mbr := Structs.MBR{}
+					file.Seek(0, 0)
+					errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(mbr))), binary.BigEndian, &mbr)
+					if mbr.Mbr_partition[nodo.Pos].Part_status != '2' {
+						file.Close()
+						return Structs.Resp{Res: "NO SE HA FORMATEADO LA MONTURA DE LA PARTICION " + nodo.Name}
+					}
+					file.Seek(int64(nodo.Start), 0)
+				} else if nodo.Type == 'l' {
+					ebr := Structs.EBR{}
+					file.Seek(int64(nodo.Start), 0)
+					errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(ebr))), binary.BigEndian, &ebr)
+					if ebr.Part_status != '2' {
+						file.Close()
+						return Structs.Resp{Res: "NO SE HA FORMATEADO LA MONTURA DE LA PARTICION " + nodo.Name}
+					}
+					file.Seek(int64(nodo.Start+int(unsafe.Sizeof(Structs.EBR{}))), 0)
+				}
+				errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(sb))), binary.BigEndian, &sb)
+				rutaS := strings.Split(Rutarep, "/")
+				if len(rutaS) < 2 {
+					file.Close()
+					return Structs.Resp{Res: "RUTA INVALIDA"}
+				}
+
+				posInodoF := getInodoF(rutaS, 1, len(rutaS)-1, int(sb.S_inode_start), file)
+
+				if posInodoF == -1 {
+					return Structs.Resp{Res: "ARCHIVO NO ENCONTRADO"}
+				}
+
+				var inodo Structs.TablaInodo
+				file.Seek(int64(posInodoF), 0)
+				errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(inodo))), binary.BigEndian, &inodo)
+
+				if inodo.I_type != '1' {
+					return Structs.Resp{Res: "LA RUTA NO HACE REFERENCIA A UN ARCHIVO"}
+				}
+
+				inodo.I_atime = time.Now().Unix()
+				file.Seek(int64(posInodoF), 0)
+				var bufferInode bytes.Buffer
+				errf = binary.Write(&bufferInode, binary.BigEndian, inodo)
+				EscribirFile(file, bufferInode.Bytes())
+
+				dot, errD := os.OpenFile("Reportes/"+nombreD+".dot", os.O_CREATE, 0777)
+				dot.Close()
+				if errD != nil {
+					fmt.Println(errD)
+				}
+
+				content := getContenArchivo(posInodoF, file)
+				dotS := ""
+				dotS += "digraph G {\n"
+				dotS += "node[shape=none, lblstyle=\"align=left\"]\n"
+				dotS += "start[label=\""
+
+				dotS += rutaS[len(rutaS)-1] + "\n"
+				dotS += content
+				dotS += "\"]"
+				dotS += "}"
+				errD = os.WriteFile("Reportes/"+nombreD+".dot", []byte(dotS), 0777)
+				if errD != nil {
+					fmt.Println(errD)
+				}
+
+				ext := Extrep
+				_, errD = exec.Command("dot", "-T"+Extrep, "Reportes/"+nombreD+".dot", "-o", "Reportes/"+nombreD).Output()
+				if errD != nil {
+					fmt.Printf("%s", errD)
+				}
+				_, errD = exec.Command("dot", "-T"+ext, "Reportes/"+nombreD+".dot", "-o", Dirrep+nombreD).Output()
+				if errD != nil {
+					fmt.Printf("%s", errD)
+				}
+
+				file.Close()
+				return Structs.Resp{Res: "SE GENERO EL REPORTE FILE DE " + rutaS[len(rutaS)-1]}
+			}
+			return Structs.Resp{Res: "DISCO INEXISTENTE"}
+		}
+		return Structs.Resp{Res: "DEBE ESCRIBIR RUTA DEL ARCHIVO"}
 	}
 	return Structs.Resp{Res: "NO SE HA ENCONTRADO ALGUNA MONTURA CON EL ID: " + Idrep}
 }
@@ -605,4 +700,64 @@ func getPartName(partName [16]byte) string {
 		name += string(partName[i])
 	}
 	return name
+}
+
+func getInodoF(rutaS []string, posAct int, rutaSize int, start int, file *os.File) int {
+	var inodo Structs.TablaInodo
+	var carpeta Structs.BloqueCarpeta
+
+	file.Seek(int64(start), 0)
+	errf := binary.Read(LeerFile(file, int(unsafe.Sizeof(inodo))), binary.BigEndian, &inodo)
+	if errf != nil {
+		fmt.Println(errf)
+	}
+
+	for i := 0; i < len(inodo.I_block); i++ {
+		if inodo.I_block[i] != -1 {
+			file.Seek(int64(int(inodo.I_block[i])), 0)
+			errf = binary.Read(LeerFile(file, int(unsafe.Sizeof(carpeta))), binary.BigEndian, &carpeta)
+			for c := 0; c < 4; c++ {
+				name := getContentName(carpeta.B_content[c].B_name)
+				if name == rutaS[posAct] {
+					if posAct < rutaSize {
+						return getInodoF(rutaS, posAct+1, rutaSize, int(carpeta.B_content[c].B_inodo), file)
+					}
+
+					if posAct == rutaSize {
+						return int(carpeta.B_content[c].B_inodo)
+					}
+				}
+			}
+		}
+	}
+	return -1
+}
+
+func getContentName(name [12]byte) string {
+	var cadena string
+
+	for i := 0; i < 12; i++ {
+		if name[i] == '\000' {
+			break
+		}
+		cadena += string([]byte{name[i]})
+	}
+
+	return cadena
+}
+
+func getContenArchivo(inodoStart int, file *os.File) string {
+	var inodo Structs.TablaInodo
+	var archivo Structs.BloqueArchivo
+	file.Seek(int64(inodoStart), 0)
+	errfU = binary.Read(LeerFile(file, int(unsafe.Sizeof(inodo))), binary.BigEndian, &inodo)
+	content := ""
+	for i := 0; i < 16; i++ {
+		if inodo.I_block[i] != -1 {
+			file.Seek(int64(inodo.I_block[i]), 0)
+			errfU = binary.Read(LeerFile(file, int(unsafe.Sizeof(archivo))), binary.BigEndian, &archivo)
+			content += archivoContent2(archivo.B_content)
+		}
+	}
+	return content
 }
