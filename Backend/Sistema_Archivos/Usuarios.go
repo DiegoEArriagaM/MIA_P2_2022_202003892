@@ -227,7 +227,6 @@ func mkgrp() Structs.Resp {
 
 					contador := 0
 					j := 0
-
 					for j < len(usersTxt) {
 						CambioCont = false
 						inodo = agregarArchivo(usersTxt[j], inodo, j, inicioB+contador)
@@ -272,6 +271,361 @@ func mkgrp() Structs.Resp {
 		}
 		return Structs.Resp{Res: "NO SE HA ENCONTRADO ALGUNA MONTURA CON EL ID: " + UsuarioL.IdMount}
 	}
+	return Structs.Resp{Res: "TIENE QUE INGRESAR COMO EL USUARIO root DEL GRUPO 1 PARA EJECUTAR ESTE COMANDO"}
+}
+
+func rmgrp() Structs.Resp {
+	defer func() {
+		IdUsuario = " "
+		NameUsuario = " "
+		PassUsuario = " "
+		GruopUsuario = " "
+		sbU = Structs.SuperBloque{}
+		fileU = nil
+	}()
+	if UsuarioL.IdU == 1 && UsuarioL.IdG == 1 {
+		if NameUsuario == " " {
+			return Structs.Resp{Res: "DEBE INGRESAR NOMBRE DEL GRUPO"}
+		}
+
+		nodo := Mlist.buscar(UsuarioL.IdMount)
+		if nodo != nil {
+			fileU, errfU = os.OpenFile(nodo.Path, os.O_RDWR, 0777)
+			if errfU == nil {
+				if nodo.Type == 'p' {
+					fileU.Seek(int64(nodo.Start), 0)
+					errfU = binary.Read(LeerFile(fileU, int(unsafe.Sizeof(sbU))), binary.BigEndian, &sbU)
+				} else if nodo.Type == 'l' {
+					fileU.Seek(int64(nodo.Start+int(unsafe.Sizeof(Structs.EBR{}))), 0)
+					errfU = binary.Read(LeerFile(fileU, int(unsafe.Sizeof(sbU))), binary.BigEndian, &sbU)
+				}
+
+				content := getConten(int(sbU.S_inode_start) + int(unsafe.Sizeof(Structs.TablaInodo{})))
+				grupos := splitGrp(content)
+				if grupoExist(grupos, NameUsuario) {
+					for i := 0; i < len(grupos); i++ {
+						datos := strings.Split(grupos[i], ",")
+						if datos[2] == NameUsuario {
+							datos[0] = "0"
+							newS := datos[0] + "," + datos[1] + "," + datos[2]
+							content = strings.Replace(content, grupos[i], newS, 1)
+						}
+					}
+					usersTxt := splitConten(content)
+					inodo := Structs.TablaInodo{}
+					seekInodo := int(sbU.S_inode_start) + int(unsafe.Sizeof(inodo))
+					fileU.Seek(int64(seekInodo), 0)
+					errfU = binary.Read(LeerFile(fileU, int(unsafe.Sizeof(inodo))), binary.BigEndian, &inodo)
+
+					tamanio := 0
+					for tm := 0; tm < len(usersTxt); tm++ {
+						tamanio += len(usersTxt[tm])
+					}
+					inodo.I_s = int32(tamanio)
+					inodo.I_mtime = time.Now().Unix()
+					inodo.I_atime = time.Now().Unix()
+
+					j := 0
+					for j < len(usersTxt) {
+						inodo = agregarArchivo(usersTxt[j], inodo, j, -1)
+						j++
+					}
+
+					fileU.Seek(int64(seekInodo), 0)
+					var bufferInodo bytes.Buffer
+					errf := binary.Write(&bufferInodo, binary.BigEndian, inodo)
+					if errf != nil {
+						fmt.Println(errf)
+					}
+					EscribirFile(fileU, bufferInodo.Bytes())
+					if nodo.Type == 'p' {
+						fileU.Seek(int64(nodo.Start), 0)
+						var bufferSB bytes.Buffer
+						errf = binary.Write(&bufferSB, binary.BigEndian, sbU)
+						if errf != nil {
+							fmt.Println(errf)
+						}
+						EscribirFile(fileU, bufferSB.Bytes())
+					} else if nodo.Type == 'l' {
+						fileU.Seek(int64(nodo.Start+int(unsafe.Sizeof(Structs.EBR{}))), 0)
+						var bufferSB bytes.Buffer
+						errf = binary.Write(&bufferSB, binary.BigEndian, sbU)
+						if errf != nil {
+							fmt.Println(errf)
+						}
+						EscribirFile(fileU, bufferSB.Bytes())
+					}
+
+					fileU.Close()
+
+					return Structs.Resp{Res: "SE REMOVIO EL GRUPO " + NameUsuario}
+				}
+				return Structs.Resp{Res: "NO EXISTE GRUPO " + NameUsuario}
+			}
+			return Structs.Resp{Res: "DISCO INEXISTENTE"}
+		}
+		return Structs.Resp{Res: "NO SE HA ENCONTRADO ALGUNA MONTURA CON EL ID: " + UsuarioL.IdMount}
+	}
+	return Structs.Resp{Res: "TIENE QUE INGRESAR COMO EL USUARIO root DEL GRUPO 1 PARA EJECUTAR ESTE COMANDO"}
+}
+
+func rmusr() Structs.Resp {
+	defer func() {
+		IdUsuario = " "
+		NameUsuario = " "
+		PassUsuario = " "
+		GruopUsuario = " "
+		sbU = Structs.SuperBloque{}
+		fileU = nil
+	}()
+	if UsuarioL.IdU == 1 && UsuarioL.IdG == 1 {
+		if NameUsuario == " " {
+			return Structs.Resp{Res: "DEBE INGRESAR NOMBRE DEL GRUPO"}
+		}
+		nodo := Mlist.buscar(UsuarioL.IdMount)
+		if nodo != nil {
+			fileU, errfU = os.OpenFile(nodo.Path, os.O_RDWR, 0777)
+			if errfU == nil {
+				if nodo.Type == 'p' {
+					fileU.Seek(int64(nodo.Start), 0)
+					errfU = binary.Read(LeerFile(fileU, int(unsafe.Sizeof(sbU))), binary.BigEndian, &sbU)
+				} else if nodo.Type == 'l' {
+					fileU.Seek(int64(nodo.Start+int(unsafe.Sizeof(Structs.EBR{}))), 0)
+					errfU = binary.Read(LeerFile(fileU, int(unsafe.Sizeof(sbU))), binary.BigEndian, &sbU)
+				}
+
+				content := getConten(int(sbU.S_inode_start) + int(unsafe.Sizeof(Structs.TablaInodo{})))
+				usuarios := splitUsr(content)
+				if usrExist(usuarios, NameUsuario) {
+					for i := 0; i < len(usuarios); i++ {
+						datos := strings.Split(usuarios[i], ",")
+						if datos[3] == NameUsuario {
+							datos[0] = "0"
+							newS := datos[0] + "," + datos[1] + "," + datos[2] + "," + datos[3] + "," + datos[4]
+							content = strings.Replace(content, usuarios[i], newS, 1)
+						}
+					}
+
+					usersTxt := splitConten(content)
+					inodo := Structs.TablaInodo{}
+					seekInodo := int(sbU.S_inode_start) + int(unsafe.Sizeof(inodo))
+					fileU.Seek(int64(seekInodo), 0)
+					errfU = binary.Read(LeerFile(fileU, int(unsafe.Sizeof(inodo))), binary.BigEndian, &inodo)
+
+					tamanio := 0
+					for tm := 0; tm < len(usersTxt); tm++ {
+						tamanio += len(usersTxt[tm])
+					}
+					inodo.I_s = int32(tamanio)
+					inodo.I_mtime = time.Now().Unix()
+					inodo.I_atime = time.Now().Unix()
+
+					j := 0
+					for j < len(usersTxt) {
+						inodo = agregarArchivo(usersTxt[j], inodo, j, -1)
+						j++
+					}
+
+					fileU.Seek(int64(seekInodo), 0)
+					var bufferInodo bytes.Buffer
+					errf := binary.Write(&bufferInodo, binary.BigEndian, inodo)
+					if errf != nil {
+						fmt.Println(errf)
+					}
+					EscribirFile(fileU, bufferInodo.Bytes())
+					if nodo.Type == 'p' {
+						fileU.Seek(int64(nodo.Start), 0)
+						var bufferSB bytes.Buffer
+						errf = binary.Write(&bufferSB, binary.BigEndian, sbU)
+						if errf != nil {
+							fmt.Println(errf)
+						}
+						EscribirFile(fileU, bufferSB.Bytes())
+					} else if nodo.Type == 'l' {
+						fileU.Seek(int64(nodo.Start+int(unsafe.Sizeof(Structs.EBR{}))), 0)
+						var bufferSB bytes.Buffer
+						errf = binary.Write(&bufferSB, binary.BigEndian, sbU)
+						if errf != nil {
+							fmt.Println(errf)
+						}
+						EscribirFile(fileU, bufferSB.Bytes())
+					}
+
+					fileU.Close()
+					return Structs.Resp{Res: "SE REMOVIO EL USUARIO " + NameUsuario}
+				}
+				return Structs.Resp{Res: "NO EXISTE EL USUARIO " + NameUsuario}
+			}
+			return Structs.Resp{Res: "DISCO INEXISTENTE"}
+		}
+		return Structs.Resp{Res: "NO SE HA ENCONTRADO ALGUNA MONTURA CON EL ID: " + UsuarioL.IdMount}
+	}
+	return Structs.Resp{Res: "TIENE QUE INGRESAR COMO EL USUARIO root DEL GRUPO 1 PARA EJECUTAR ESTE COMANDO"}
+}
+
+func mkusr() Structs.Resp {
+	defer func() {
+		IdUsuario = " "
+		NameUsuario = " "
+		PassUsuario = " "
+		GruopUsuario = " "
+		sbU = Structs.SuperBloque{}
+		fileU = nil
+	}()
+
+	if UsuarioL.IdU == 1 && UsuarioL.IdG == 1 {
+		if NameUsuario == " " || PassUsuario == " " || GruopUsuario == " " {
+			return Structs.Resp{Res: "ASEGURESE DE INGRESAR TODOS LOS DATOS DEL USUARIO"}
+		}
+
+		nodo := Mlist.buscar(UsuarioL.IdMount)
+		if nodo != nil {
+			fileU, errfU = os.OpenFile(nodo.Path, os.O_RDWR, 0777)
+			if errfU == nil {
+				if nodo.Type == 'p' {
+					fileU.Seek(int64(nodo.Start), 0)
+					errfU = binary.Read(LeerFile(fileU, int(unsafe.Sizeof(sbU))), binary.BigEndian, &sbU)
+				} else if nodo.Type == 'l' {
+					fileU.Seek(int64(nodo.Start+int(unsafe.Sizeof(Structs.EBR{}))), 0)
+					errfU = binary.Read(LeerFile(fileU, int(unsafe.Sizeof(sbU))), binary.BigEndian, &sbU)
+				}
+
+				content := getConten(int(sbU.S_inode_start) + int(unsafe.Sizeof(Structs.TablaInodo{})))
+				nuevoUsr := ""
+				cantBlockAnt := len(splitConten(content))
+				grupos := splitGrp(content)
+				usuarios := splitUsr(content)
+
+				if usrExist(usuarios, NameUsuario) {
+					return Structs.Resp{Res: "NOMBRE DE USUARIO YA REGISTRADO EN EL SISTEMA"}
+				}
+				if grupoExist(grupos, GruopUsuario) {
+					nuevoUsr = getUID(usuarios) + ",U," + GruopUsuario + "," + NameUsuario + "," + PassUsuario + "\n"
+					content += nuevoUsr
+					usersTxt := splitConten(content)
+					cantBlockAct := len(usersTxt)
+
+					if len(usersTxt) > 16 {
+						return Structs.Resp{Res: "NO SE PUEDE GUARDAR EL USUARIO"}
+					}
+
+					if int(sbU.S_free_blocks_count) < (cantBlockAct - cantBlockAnt) {
+						return Structs.Resp{Res: "NO HAY SUFICIENTES BLOQUES LIBRES PARA ACTUALIZAR EL ARCHIVO"}
+					}
+
+					//Se busca espacion en el bitmap de bloques
+					var bit byte
+					start := int(sbU.S_bm_block_start)
+					end := start + int(sbU.S_block_start)
+					cantContiguos := 0
+					inicioBM := -1
+					inicioB := -1
+					contadorA := 0
+					if (cantBlockAct - cantBlockAnt) > 0 {
+						for i := start; i < end; i++ {
+							fileU.Seek(int64(i), 0)
+							errfU = binary.Read(LeerFile(fileU, int(unsafe.Sizeof(bit))), binary.BigEndian, &bit)
+							if bit == '1' {
+								cantContiguos = 0
+								inicioBM = -1
+								inicioB = -1
+							} else {
+								if cantContiguos == 0 {
+									inicioBM = i
+									inicioB = contadorA
+								}
+								cantContiguos++
+							}
+							if cantContiguos >= (cantBlockAct - cantBlockAnt) {
+								break
+							}
+							contadorA++
+						}
+						if inicioBM == -1 || cantContiguos != (cantBlockAct-cantBlockAnt) {
+							return Structs.Resp{Res: "NO HAY SUFICIENTES BLOQUES CONTIGUOS PARA ACTUALIZAR EL ARCHIVO"}
+						}
+
+						for i := inicioBM; i < (inicioBM + (cantBlockAct - cantBlockAnt)); i++ {
+							var uno byte = '1'
+							fileU.Seek(int64(i), 0)
+							var bufferByte bytes.Buffer
+							errf := binary.Write(&bufferByte, binary.BigEndian, uno)
+							if errf != nil {
+								fmt.Println(errf)
+							}
+							EscribirFile(fileU, bufferByte.Bytes())
+						}
+						sbU.S_free_blocks_count = int32(int(sbU.S_free_blocks_count) - (cantBlockAct - cantBlockAnt))
+						bit2 := 0
+						for k := start; k < end; k++ {
+							fileU.Seek(int64(k), 0)
+							errfU = binary.Read(LeerFile(fileU, int(unsafe.Sizeof(bit))), binary.BigEndian, &bit)
+							if bit == '0' {
+								break
+							}
+							bit2++
+						}
+						sbU.S_first_blo = int32(bit2)
+					}
+
+					inodo := Structs.TablaInodo{}
+					seekInodo := int(sbU.S_inode_start) + int(unsafe.Sizeof(inodo))
+					fileU.Seek(int64(seekInodo), 0)
+					errfU = binary.Read(LeerFile(fileU, int(unsafe.Sizeof(inodo))), binary.BigEndian, &inodo)
+
+					tamanio := 0
+					for tm := 0; tm < len(usersTxt); tm++ {
+						tamanio += len(usersTxt[tm])
+					}
+					inodo.I_s = int32(tamanio)
+					inodo.I_mtime = time.Now().Unix()
+
+					contador := 0
+					j := 0
+					for j < len(usersTxt) {
+						CambioCont = false
+						inodo = agregarArchivo(usersTxt[j], inodo, j, inicioB+contador)
+						if CambioCont {
+							contador++
+						}
+						j++
+					}
+
+					fileU.Seek(int64(seekInodo), 0)
+					var bufferInodo bytes.Buffer
+					errf := binary.Write(&bufferInodo, binary.BigEndian, inodo)
+					if errf != nil {
+						fmt.Println(errf)
+					}
+					EscribirFile(fileU, bufferInodo.Bytes())
+					if nodo.Type == 'p' {
+						fileU.Seek(int64(nodo.Start), 0)
+						var bufferSB bytes.Buffer
+						errf = binary.Write(&bufferSB, binary.BigEndian, sbU)
+						if errf != nil {
+							fmt.Println(errf)
+						}
+						EscribirFile(fileU, bufferSB.Bytes())
+					} else if nodo.Type == 'l' {
+						fileU.Seek(int64(nodo.Start+int(unsafe.Sizeof(Structs.EBR{}))), 0)
+						var bufferSB bytes.Buffer
+						errf = binary.Write(&bufferSB, binary.BigEndian, sbU)
+						if errf != nil {
+							fmt.Println(errf)
+						}
+						EscribirFile(fileU, bufferSB.Bytes())
+					}
+
+					fileU.Close()
+					return Structs.Resp{Res: "SE REGISTRO AL USUARIO " + NameUsuario}
+				}
+				return Structs.Resp{Res: "GRUPO " + GruopUsuario + " NO EXISTE"}
+			}
+			return Structs.Resp{Res: "DISCO INEXISTENTE"}
+		}
+		return Structs.Resp{Res: "NO SE HA ENCONTRADO ALGUNA MONTURA CON EL ID: " + UsuarioL.IdMount}
+	}
+
 	return Structs.Resp{Res: "TIENE QUE INGRESAR COMO EL USUARIO root DEL GRUPO 1 PARA EJECUTAR ESTE COMANDO"}
 }
 
@@ -348,6 +702,17 @@ func grupoExist(grupos []string, name string) bool {
 	for i := 0; i < len(grupos); i++ {
 		datosG = strings.Split(grupos[i], ",")
 		if datosG[2] == name && datosG[0] != "0" {
+			return true
+		}
+	}
+	return false
+}
+
+func usrExist(usuarios []string, name string) bool {
+	var datosG []string
+	for i := 0; i < len(usuarios); i++ {
+		datosG = strings.Split(usuarios[i], ",")
+		if datosG[3] == name && datosG[0] != "0" {
 			return true
 		}
 	}
