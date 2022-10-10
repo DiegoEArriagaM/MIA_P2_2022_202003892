@@ -848,6 +848,138 @@ func Lector(comando string) Structs.Resp {
 				}
 			}
 			return rmusr()
+		} else if strncmp(entradaL, "mkfile") {
+			i := 6
+			for entradaL[i] == ' ' && len(entradaL) > 0 {
+				i++
+			}
+			entradaL = entradaL[i:]
+			entradaO = entradaO[i:]
+			for len(entradaO) > 0 {
+				if strncmp(entradaL, "-path") {
+					i = find(entradaL, "=") + 1
+					for entradaL[i] == ' ' && len(entradaL) > 0 {
+						i++
+					}
+					entradaL = entradaL[i:]
+					entradaO = entradaO[i:]
+
+					if entradaL[0] == '"' {
+						entradaL = entradaL[1:]
+						entradaO = entradaO[1:]
+
+						i = find(entradaL, "\"")
+						p := entradaO[:i]
+						PathArchivos = p
+						i += 1
+						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+							i++
+						}
+						entradaL = entradaL[i:]
+						entradaO = entradaO[i:]
+
+					} else {
+						i = find(entradaL, " ")
+						p := entradaO[:i]
+						PathArchivos = p
+						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+							i++
+						}
+						entradaL = entradaL[i:]
+						entradaO = entradaO[i:]
+					}
+
+				} else if strncmp(entradaL, "-size") {
+					i = find(entradaL, "=") + 1
+					for entradaL[i] == ' ' && len(entradaL) > 0 {
+						i++
+					}
+					entradaL = entradaL[i:]
+					entradaO = entradaO[i:]
+
+					i = find(entradaL, " ")
+					s, _ := strconv.Atoi(entradaL[:i])
+					SArchivos = s
+					for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+						i++
+					}
+					entradaL = entradaL[i:]
+					entradaO = entradaO[i:]
+				} else if strncmp(entradaL, "-r") {
+					i = 2
+					for entradaL[i] == ' ' && len(entradaL) > 0 {
+						i++
+					}
+					entradaL = entradaL[i:]
+					entradaO = entradaO[i:]
+
+					RArchivos = true
+
+				} else if strncmp(entradaL, "#") {
+					break
+				} else {
+					return Structs.Resp{Res: "ERROR EN EL COMANDO DE ENTRADA: " + entradaO}
+				}
+			}
+			return mkfile()
+		} else if strncmp(entradaL, "mkdir") {
+			i := 5
+			for entradaL[i] == ' ' && len(entradaL) > 0 {
+				i++
+			}
+			entradaL = entradaL[i:]
+			entradaO = entradaO[i:]
+			for len(entradaO) > 0 {
+				if strncmp(entradaL, "-path") {
+					i = find(entradaL, "=") + 1
+					for entradaL[i] == ' ' && len(entradaL) > 0 {
+						i++
+					}
+					entradaL = entradaL[i:]
+					entradaO = entradaO[i:]
+
+					if entradaL[0] == '"' {
+						entradaL = entradaL[1:]
+						entradaO = entradaO[1:]
+
+						i = find(entradaL, "\"")
+						p := entradaO[:i]
+						PathArchivos = p
+						i += 1
+						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+							i++
+						}
+						entradaL = entradaL[i:]
+						entradaO = entradaO[i:]
+
+					} else {
+						i = find(entradaL, " ")
+						p := entradaO[:i]
+						PathArchivos = p
+						for i < len(entradaL) && entradaL[i] == ' ' && len(entradaL) > 0 {
+							i++
+						}
+						entradaL = entradaL[i:]
+						entradaO = entradaO[i:]
+					}
+
+				} else if strncmp(entradaL, "-p") {
+					i = 2
+					for entradaL[i] == ' ' && len(entradaL) > 0 {
+						i++
+					}
+					entradaL = entradaL[i:]
+					entradaO = entradaO[i:]
+
+					RArchivos = true
+
+				} else if strncmp(entradaL, "#") {
+					break
+				} else {
+					return Structs.Resp{Res: "ERROR EN EL COMANDO DE ENTRADA: " + entradaO}
+				}
+			}
+			return mkdir()
 		} else if strncmp(entradaL, "rep") {
 			i := 3
 			for entradaL[i] == ' ' && len(entradaL) > 0 {

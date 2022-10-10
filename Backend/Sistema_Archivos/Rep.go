@@ -712,6 +712,10 @@ func getInodoF(rutaS []string, posAct int, rutaSize int, start int, file *os.Fil
 		fmt.Println(errf)
 	}
 
+	if inodo.I_type == '1' {
+		return -1
+	}
+
 	for i := 0; i < len(inodo.I_block); i++ {
 		if inodo.I_block[i] != -1 {
 			file.Seek(int64(int(inodo.I_block[i])), 0)
