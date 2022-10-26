@@ -24,7 +24,21 @@ export class LoginComponent implements OnInit {
   }
 
   constructor(private route:Router,private servicios:ServicioService) { 
-    
+    if(sessionStorage['idU']==undefined){
+      this.entrada.idU=0
+      this.entrada.idG=0
+      this.entrada.idMoun=" "
+      this.entrada.nombreU=" "
+      this.entrada.login=false
+    }else{
+      this.entrada.idU=sessionStorage['idU']
+      this.entrada.idG=sessionStorage['idG']
+      this.entrada.idMoun=sessionStorage['idMoun']
+      this.entrada.nombreU=sessionStorage['nombreU']
+      this.entrada.login=sessionStorage['login']
+    }
+    console.log(this.entrada)
+    console.log(sessionStorage)
   }
 
   ngOnInit(): void {
@@ -41,6 +55,8 @@ export class LoginComponent implements OnInit {
     sessionStorage['idMoun']=datos['id_mount']
     sessionStorage['nombreU']=datos['nombre_u']
     sessionStorage['login']=datos['login']
+    console.log(this.entrada)
+    console.log(sessionStorage)
   }
 
   mandarDatos(){

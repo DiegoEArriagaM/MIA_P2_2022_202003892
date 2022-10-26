@@ -63,7 +63,6 @@ export class MainComponent implements OnInit {
       this.execE.idMoun=sessionStorage['idMoun']
       this.execE.nombreU=sessionStorage['nombreU']
       this.execE.login=sessionStorage['login']
-      console.log(this.entrada)
     }
     this.terminal=""
     this.inicio=""
@@ -105,6 +104,8 @@ export class MainComponent implements OnInit {
     sessionStorage['idMoun']=datos['id_mount']
     sessionStorage['nombreU']=datos['nombre_u']
     sessionStorage['login']=datos['login']
+    console.log(this.entrada)
+    console.log(sessionStorage)
   }
 
   mandarComando(){
@@ -163,6 +164,7 @@ export class MainComponent implements OnInit {
             data=>{
               datos=data
               this.resp+=datos.res
+              this.actualizarU(datos.usuario)
             },
             err=>{
               console.log(err)
@@ -214,7 +216,7 @@ export class MainComponent implements OnInit {
   }
 
   verRep(name:any){
-    const dir="http://localhost:8000/Reportes/"+name
+    const dir="http://18.119.128.86:8000/Reportes/"+name
         window.open(dir)
   }
 
