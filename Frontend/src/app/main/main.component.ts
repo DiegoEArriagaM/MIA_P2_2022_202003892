@@ -216,7 +216,7 @@ export class MainComponent implements OnInit {
   }
 
   verRep(name:any){
-    const dir="http://18.119.128.86:8000/Reportes/"+name
+    const dir="http://18.117.99.74:8000/Reportes/"+name
         window.open(dir)
   }
 

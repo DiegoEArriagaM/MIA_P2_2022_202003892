@@ -12,18 +12,18 @@ export class ServicioService {
   constructor(private http:HttpClient) { }
 
   Inicio(){
-    return this.http.get(`http://18.119.128.86:8000`)
+    return this.http.get(`http://18.117.99.74:8000`)
   }
 
   ListR(){
-    return this.http.get(`http://18.119.128.86:8000/ListRep`)
+    return this.http.get(`http://18.117.99.74:8000/ListRep`)
   }
 
   Entrada(datos:any){
-    return this.http.post(`http://18.119.128.86:8000/Entrada`,datos,{headers:this.headers});
+    return this.http.post(`http://18.117.99.74:8000/Entrada`,datos,{headers:this.headers});
   }
 
   Exec(datos:any){
-    return this.http.post(`http://18.119.128.86:8000/Exec`,datos,{headers:this.headers});
+    return this.http.post(`http://18.117.99.74:8000/Exec`,datos,{headers:this.headers});
   }
 }
